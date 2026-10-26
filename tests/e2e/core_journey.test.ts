@@ -295,8 +295,11 @@ describe('Phase 6 E2E: Full Lifecycle User Journey', () => {
     expect(newShuttleTask.title).toBe('Book coastal guest shuttle service');
 
     // 4. Audit history record was committed
-    expect(approveRes.body.versionRecord).toBeDefined();
-    expect(approveRes.body.versionRecord.versionNumber).toBe(2);
-    expect(approveRes.body.versionRecord.actorId).toBe('user-maya');
+    const latestVersion = approveRes.body.updatedPlan.versions.find(
+      (v: any) => v.versionNumber === 2
+    );
+    expect(latestVersion).toBeDefined();
+    expect(latestVersion.versionNumber).toBe(2);
+    expect(latestVersion.createdBy).toBe('user-maya');
   });
 });

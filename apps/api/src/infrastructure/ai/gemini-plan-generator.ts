@@ -107,7 +107,43 @@ ${userInput || '(First inquiry)'}
 
 Output JSON conforming to the DiscoveryTurnResponse schema.`;
 
-    return this.generateStructuredJson(prompt, systemInstruction, DiscoveryTurnResponseSchema);
+    const result = await this.generateStructuredJson(prompt, systemInstruction, DiscoveryTurnResponseSchema);
+    return {
+      ...result,
+      updatedBrief: {
+        ...result.updatedBrief,
+        dateFlexibility: result.updatedBrief.dateFlexibility || 'unknown',
+        timezone: result.updatedBrief.timezone || 'UTC',
+        currency: result.updatedBrief.currency || 'USD',
+        priorities: (result.updatedBrief.priorities || []).map((p) => ({
+          key: p.key,
+          weight: p.weight ?? 3,
+          source: p.source ?? 'user',
+        })),
+        preferences: result.updatedBrief.preferences || {},
+        commitments: (result.updatedBrief.commitments || []).map((c) => ({
+          id: c.id,
+          kind: c.kind,
+          description: c.description,
+          locked: c.locked ?? true,
+        })),
+        unknowns: result.updatedBrief.unknowns || [],
+        assumptions: result.updatedBrief.assumptions || [],
+      },
+      assumptionsMade: result.assumptionsMade || [],
+      whatTrellisKnows: result.whatTrellisKnows || [],
+      nextQuestion: result.nextQuestion
+        ? {
+            ...result.nextQuestion,
+            options: (result.nextQuestion.options || []).map((o) => ({
+              ...o,
+              isProvisionalAssumption: o.isProvisionalAssumption ?? false,
+            })),
+            allowSkip: result.nextQuestion.allowSkip ?? true,
+            allowNotSure: result.nextQuestion.allowNotSure ?? true,
+          }
+        : undefined,
+    };
   }
 
   async generateConcepts(brief: EventBrief): Promise<{ concepts: Concept[] }> {
@@ -211,7 +247,38 @@ Generate tasks, budgetItems, vendors, and ideas.`;
       ),
     });
 
-    return this.generateStructuredJson(prompt, systemInstruction, PlanSchema);
+    const parsedPlan = await this.generateStructuredJson(prompt, systemInstruction, PlanSchema);
+
+    return {
+      tasks: parsedPlan.tasks.map((t) => ({
+        ...t,
+        locked: t.locked ?? false,
+        dependencyIds: t.dependencyIds ?? [],
+        linkedBudgetItemIds: t.linkedBudgetItemIds ?? [],
+        linkedVendorIds: t.linkedVendorIds ?? [],
+      })),
+      budgetItems: parsedPlan.budgetItems.map((b) => ({
+        ...b,
+        status: b.status ?? 'planned',
+        currency: b.currency ?? (brief.currency || 'USD'),
+        locked: b.locked ?? false,
+        sourceEvidenceIds: b.sourceEvidenceIds ?? [],
+      })),
+      vendors: parsedPlan.vendors.map((v) => ({
+        ...v,
+        availabilityStatus: v.availabilityStatus ?? 'unknown',
+        stage: v.stage ?? 'needed',
+        provenance: v.provenance ?? 'needs_confirmation',
+      })),
+      ideas: parsedPlan.ideas.map((i) => ({
+        ...i,
+        requiredTasks: i.requiredTasks ?? [],
+        mediaAssets: i.mediaAssets ?? [],
+        selected: i.selected ?? true,
+        locked: i.locked ?? false,
+        provenance: i.provenance ?? 'ai_estimate',
+      })),
+    };
   }
 
   async proposeRevision(
@@ -255,7 +322,10 @@ Base Version: ${currentPlan.event.currentVersion}`;
       eventId: currentPlan.event.id,
       baseVersion: currentPlan.event.currentVersion,
       requestedChange: parsed.requestedChange,
-      operations: parsed.operations,
+      operations: parsed.operations.map((op) => ({
+        ...op,
+        requiresApproval: op.requiresApproval ?? false,
+      })),
       affectedItems: parsed.affectedItems,
       assumptions: parsed.assumptions,
       unresolvedQuestions: parsed.unresolvedQuestions,

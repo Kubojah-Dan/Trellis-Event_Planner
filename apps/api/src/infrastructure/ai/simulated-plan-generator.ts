@@ -6,7 +6,7 @@ import {
 } from '@trellis/contracts';
 import { PlanGenerator, GeneratedPlanOutput } from './plan-generator.interface';
 import { EventAggregateWithItems } from '../../domain/ports';
-import { EVENT_CAPABILITY_REGISTRY, EventType } from '@trellis/config';
+import { EVENT_CAPABILITY_REGISTRY } from '@trellis/config';
 import crypto from 'node:crypto';
 
 export class SimulatedPlanGenerator implements PlanGenerator {
@@ -14,8 +14,7 @@ export class SimulatedPlanGenerator implements PlanGenerator {
     return true;
   }
 
-  async selectNextQuestion(brief: EventBrief, userInput?: string): Promise<DiscoveryTurnResponse> {
-    const eventType = brief.eventType || 'custom';
+  async selectNextQuestion(brief: EventBrief, _userInput?: string): Promise<DiscoveryTurnResponse> {
     const whatKnows: string[] = [];
     const assumptions: string[] = [...(brief.assumptions || [])];
 
@@ -43,9 +42,9 @@ export class SimulatedPlanGenerator implements PlanGenerator {
           impactDimension: 'Venue Capacity & Catering Budget',
           inputType: 'single_choice',
           options: [
-            { id: 'opt_intimate', label: 'Intimate gathering (10–30 guests)', description: 'Focused on close family & friends' },
-            { id: 'opt_medium', label: 'Medium celebration (50–100 guests)', description: 'Balanced festive social gathering' },
-            { id: 'opt_large', label: 'Grand assembly (120–250+ guests)', description: 'Large multi-group celebration' },
+            { id: 'opt_intimate', label: 'Intimate gathering (10–30 guests)', description: 'Focused on close family & friends', isProvisionalAssumption: false },
+            { id: 'opt_medium', label: 'Medium celebration (50–100 guests)', description: 'Balanced festive social gathering', isProvisionalAssumption: false },
+            { id: 'opt_large', label: 'Grand assembly (120–250+ guests)', description: 'Large multi-group celebration', isProvisionalAssumption: false },
             { id: 'opt_assume_50', label: 'Assume around 60 guests for now', description: 'Provisional planning assumption', isProvisionalAssumption: true },
           ],
           allowSkip: true,
@@ -69,9 +68,9 @@ export class SimulatedPlanGenerator implements PlanGenerator {
           impactDimension: 'Experience & Style',
           inputType: 'single_choice',
           options: [
-            { id: 'opt_relaxed', label: 'Relaxed & convivial', description: 'Warm conversation, casual dining, effortless flow' },
-            { id: 'opt_vibrant', label: 'Vibrant & energetic', description: 'Upbeat music, dynamic activities, festive celebration' },
-            { id: 'opt_editorial', label: 'Refined & intimate', description: 'Curated aesthetic, candlelight, artisanal dining' },
+            { id: 'opt_relaxed', label: 'Relaxed & convivial', description: 'Warm conversation, casual dining, effortless flow', isProvisionalAssumption: false },
+            { id: 'opt_vibrant', label: 'Vibrant & energetic', description: 'Upbeat music, dynamic activities, festive celebration', isProvisionalAssumption: false },
+            { id: 'opt_editorial', label: 'Refined & intimate', description: 'Curated aesthetic, candlelight, artisanal dining', isProvisionalAssumption: false },
             { id: 'opt_assume_relaxed', label: 'Assume a relaxed, warm atmosphere', description: 'Provisional baseline', isProvisionalAssumption: true },
           ],
           allowSkip: true,
@@ -362,7 +361,7 @@ export class SimulatedPlanGenerator implements PlanGenerator {
   async explainRecommendation(
     brief: EventBrief,
     itemLabel: string,
-    category?: string
+    _category?: string
   ): Promise<{ explanation: string; citedPreferences: string[] }> {
     const cited: string[] = [];
     if (brief.guestCount?.target) cited.push(`Guest count of ~${brief.guestCount.target}`);
