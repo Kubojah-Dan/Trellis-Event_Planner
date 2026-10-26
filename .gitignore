@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.output/
+coverage/
+
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+service-account*.json
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# IDE and OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Testing and caches
+.cache/
+.vitest/
+.turbo/
+playwright-report/
+test-results/
+ANTIGRAVITY_PROMPT.md
+DESIGN.md

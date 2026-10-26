@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F7F5EF;
+    color: #202823;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, .font-editorial {
+    font-family: 'Fraunces', Georgia, serif;
+    letter-spacing: -0.015em;
+  }
+}
+
+/* Custom interactive button styles matching Trellis editorial aesthetic */
+.btn-primary {
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-evergreen-900 text-white font-medium text-sm hover:bg-evergreen-800 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-evergreen-700 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-surface text-ink font-medium text-sm border border-warmgray-200 hover:bg-warmgray-100 hover:border-warmgray-300 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-evergreen-700 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-accent {
+  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-coral-500 text-white font-medium text-sm hover:bg-coral-600 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Accessible focus ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-evergreen-700 focus:ring-offset-2 focus:ring-offset-paper;
+}
+
+/* Editorial card */
+.editorial-card {
+  @apply bg-surface rounded-xl border border-warmgray-200 shadow-warm p-6 transition-all duration-200;
+}

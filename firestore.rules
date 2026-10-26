@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+    
+    function isEventMember(eventId) {
+      return isAuthenticated() && (
+        request.auth.uid == resource.data.ownerId ||
+        exists(/databases/$(database)/documents/events/$(eventId)/members/$(request.auth.uid))
+      );
+    }
+    
+    // User profile documents: users can read and write only their own record
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Events collection
+    match /events/{eventId} {
+      // Authorized members can read their own events
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.ownerId == request.auth.uid ||
+        exists(/databases/$(database)/documents/events/$(eventId)/members/$(request.auth.uid))
+      );
+      
+      // Critical security rule: Direct client writes to event state are strictly DENIED.
+      // All mutations, revisions, and status transitions must go through the trusted Cloud Run API.
+      allow write: if false;
+
+      // Subcollections: read-only for authorized members; writes must go through API
+      match /members/{memberId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+
+      match /tasks/{taskId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+
+      match /budgetItems/{itemId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+
+      match /vendors/{vendorId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+
+      match /ideas/{ideaId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+
+      match /versions/{versionId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+
+      match /proposals/{proposalId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+
+      match /activity/{activityId} {
+        allow read: if isEventMember(eventId);
+        allow write: if false;
+      }
+    }
+  }
+}
