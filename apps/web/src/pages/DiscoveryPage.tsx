@@ -16,8 +16,10 @@ import {
   CheckCircle2,
   HelpCircle,
   Lightbulb,
+  Mic,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { VoiceIntakeModal } from '../components/common/VoiceIntakeModal';
 
 export const DiscoveryPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -32,6 +34,7 @@ export const DiscoveryPage: React.FC = () => {
   const [eventType, setEventType] = useState<EventType>(initialType);
   const [customTypeLabel, setCustomTypeLabel] = useState('');
   const [initialNote, setInitialNote] = useState('');
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
   const [brief, setBrief] = useState<EventBrief>({
     eventType: initialType,
@@ -55,6 +58,23 @@ export const DiscoveryPage: React.FC = () => {
   // Concepts state
   const [concepts, setConcepts] = useState<Concept[]>([]);
   const [selectedConceptId, setSelectedConceptId] = useState<string>('');
+
+  // Handle Voice Intake Approval
+  const handleVoiceApprove = (spokenText: string) => {
+    setInitialNote(spokenText);
+    if (!title.trim()) {
+      const defaultTitle =
+        eventType === 'birthday'
+          ? "Birthday Celebration"
+          : eventType === 'wedding'
+          ? "Wedding Celebration"
+          : eventType === 'community'
+          ? "Community Gathering"
+          : "Special Celebration";
+      setTitle(defaultTitle);
+    }
+    toast.success('Voice transcription approved! You can review or click Begin Adaptive Discovery.');
+  };
 
   // Handle Initial Form Submission
   const handleStartDiscovery = async (e: React.FormEvent) => {
@@ -315,14 +335,25 @@ export const DiscoveryPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-bark uppercase tracking-wider mb-1.5">
-                Initial Vision or Existing Brief <span className="text-ink-subtle font-normal lowercase">(optional)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-bark uppercase tracking-wider">
+                  Initial Vision or Existing Brief <span className="text-ink-subtle font-normal lowercase">(optional)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsVoiceModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sand/80 hover:bg-sand text-bark text-xs font-semibold border border-sand transition-all hover:scale-105 shadow-sm"
+                  title="Speak your celebration thoughts with voice dictation"
+                >
+                  <Mic className="w-3.5 h-3.5 text-terra" />
+                  <span>Speak Vision (Voice AI)</span>
+                </button>
+              </div>
               <textarea
                 value={initialNote}
                 onChange={(e) => setInitialNote(e.target.value)}
                 rows={3}
-                placeholder="Describe any thoughts, guest count estimates, preferred atmosphere, dates, or constraints you already have in mind..."
+                placeholder="Describe any thoughts, guest count estimates, preferred atmosphere, dates, or constraints you already have in mind... Or click 'Speak Vision' to speak naturally."
                 className="w-full px-4 py-3 rounded-xl border border-glass-border/80 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra text-bark placeholder:text-ink-subtle"
               />
             </div>
@@ -617,6 +648,15 @@ export const DiscoveryPage: React.FC = () => {
           </p>
         </div>
       )}
+
+      {/* Voice Intake Modal */}
+      <VoiceIntakeModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        onApprove={handleVoiceApprove}
+        title="Speak Your Celebration Vision"
+        subtitle="Describe your occasion, guest count, dates, preferred atmosphere, or ideas out loud. Trellis will transcribe it in real-time."
+      />
     </div>
   );
 };

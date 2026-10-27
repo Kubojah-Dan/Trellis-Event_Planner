@@ -37,4 +37,9 @@ export interface PlanGenerator {
     itemLabel: string,
     category?: string
   ): Promise<{ explanation: string; citedPreferences: string[] }>;
+  chatWithAssistant(
+    message: string,
+    contextSummary: string,
+    history?: Array<{ role: 'user' | 'assistant'; content: string }>
+  ): Promise<{ reply: string }>;
 }

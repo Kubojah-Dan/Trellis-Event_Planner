@@ -126,5 +126,71 @@ export function createAiRouter(planGenerator: PlanGenerator, repository: EventRe
     }
   });
 
+  // ---------------------------------------------------------------------------
+  // Context-Aware Concierge Chatbot
+  // ---------------------------------------------------------------------------
+  const AssistantChatInputSchema = z.object({
+    message: z.string().min(1),
+    eventId: z.string().optional(),
+    history: z.array(z.object({
+      role: z.enum(['user', 'assistant']),
+      content: z.string(),
+    })).default([]),
+  });
+
+  router.post('/assistant/chat', async (req, res, next) => {
+    try {
+      const actorUid = req.actor!.uid;
+      const { message, eventId, history } = AssistantChatInputSchema.parse(req.body);
+
+      let contextSummary = '';
+
+      if (eventId) {
+        const aggregate = await repository.getById(eventId);
+        if (aggregate && aggregate.event.ownerId === actorUid) {
+          const { event, tasks, budgetItems, vendors, ideas } = aggregate;
+          const currency = event.currency || 'USD';
+          const plannedTotal = budgetItems.reduce((acc, b) => acc + (b.plannedMinorUnits || 0), 0);
+
+          contextSummary = `Active Celebration Workspace: "${event.title}"
+- Event ID: ${event.id}
+- Type: ${event.eventType}
+- Target Date: ${event.eventDate || 'Flexible / To be confirmed'}
+- Timezone: ${event.timezone}
+- Version: ${event.currentVersion}
+- Target Budget: ${event.brief.totalBudgetMinorUnits ? `$${(event.brief.totalBudgetMinorUnits / 100).toFixed(2)}` : 'Not set'} ${currency}
+- Total Planned Budget: $${(plannedTotal / 100).toFixed(2)} ${currency}
+
+Tasks & Schedule (${tasks.length} total):
+${tasks.slice(0, 20).map((t) => `* [${t.status.toUpperCase()}] ${t.title}${t.dueAt ? ` (Due: ${t.dueAt.slice(0, 10)})` : ''}${t.purpose ? ` - ${t.purpose}` : ''}`).join('\n')}
+
+Budget Allocations (${budgetItems.length} lines):
+${budgetItems.slice(0, 15).map((b) => `* ${b.category} - ${b.label}: $${(b.plannedMinorUnits / 100).toFixed(2)} (Status: ${b.status}, Locked: ${b.locked})`).join('\n')}
+
+Vendors & Partners (${vendors.length} items):
+${vendors.slice(0, 10).map((v) => `* ${v.name} (${v.category}) - Stage: ${v.stage}, Status: ${v.availabilityStatus}${v.priceEvidence ? `, ${v.priceEvidence}` : ''}`).join('\n')}
+
+Curated Ideas (${ideas.length} ideas):
+${ideas.slice(0, 5).map((i) => `* ${i.title}: ${i.description}`).join('\n')}`;
+        }
+      }
+
+      if (!contextSummary) {
+        const allEvents = await repository.listByActor(actorUid);
+        if (allEvents.length === 0) {
+          contextSummary = 'User has 0 celebrations created yet in this workspace.';
+        } else {
+          contextSummary = `User's Saved Celebrations (${allEvents.length} total):\n` +
+            allEvents.map((e) => `- "${e.title}" (Type: ${e.eventType}, Date: ${e.eventDate || 'Date flexible'}, Version: ${e.currentVersion})`).join('\n');
+        }
+      }
+
+      const result = await planGenerator.chatWithAssistant(message, contextSummary, history);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   return router;
 }

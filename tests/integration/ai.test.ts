@@ -174,4 +174,45 @@ describe('AI Planning Integration - Discovery, Concepts & Invariant Adherence', 
     expect(res.body.code).toBe('AI_PROVIDER_UNAVAILABLE');
     expect(res.body.message).toContain('GEMINI_API_KEY');
   });
+
+  it('answers questions intelligently about the user celebration workspace with context', async () => {
+    // 1. Create an event in the repository
+    const createRes = await request(app)
+      .post('/api/events')
+      .set('Authorization', token)
+      .send({
+        title: "Carrisa's Birthday Party",
+        eventType: 'birthday',
+        timezone: 'America/New_York',
+        currency: 'USD',
+        brief: {
+          title: "Carrisa's Birthday Party",
+          eventType: 'birthday',
+          eventDate: '2026-10-29T18:00:00Z',
+          timezone: 'America/New_York',
+          currency: 'USD',
+          priorities: [],
+          preferences: {},
+          commitments: [],
+          unknowns: [],
+          assumptions: [],
+        },
+      });
+
+    const eventId = createRes.body.event.id;
+
+    // 2. Chat with assistant asking about the birthday plan
+    const chatRes = await request(app)
+      .post('/api/ai/assistant/chat')
+      .set('Authorization', token)
+      .send({
+        eventId,
+        message: 'What did I plan to do on my birthday tomorrow?',
+      });
+
+    expect(chatRes.status).toBe(200);
+    expect(chatRes.body.reply).toBeDefined();
+    expect(typeof chatRes.body.reply).toBe('string');
+    expect(chatRes.body.reply.length).toBeGreaterThan(10);
+  });
 });

@@ -372,4 +372,14 @@ export class SimulatedPlanGenerator implements PlanGenerator {
       citedPreferences: cited.length > 0 ? cited : ['Standard celebration operational baseline'],
     };
   }
+
+  async chatWithAssistant(
+    message: string,
+    contextSummary: string,
+    _history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  ): Promise<{ reply: string }> {
+    return {
+      reply: `Here is what I found in your celebration workspace:\n\n${contextSummary}\n\nRegarding your question: "${message}" — all scheduled milestones, tasks, and budget allocations are verified in your active ledger. Let me know if you would like me to adjust any tasks or generate creative details!`,
+    };
+  }
 }

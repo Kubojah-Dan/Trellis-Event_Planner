@@ -284,11 +284,11 @@ export const AdaptiveQuestionOptionSchema = z.object({
 export type AdaptiveQuestionOption = z.infer<typeof AdaptiveQuestionOptionSchema>;
 
 export const AdaptiveQuestionSchema = z.object({
-  id: z.string(),
+  id: z.string().default(() => `q_${Date.now()}`),
   prompt: z.string(),
-  explanation: z.string(),
-  impactDimension: z.string(),
-  inputType: z.enum(['single_choice', 'multiple_choice', 'text', 'currency', 'number', 'date']),
+  explanation: z.string().default('Helps calibrate your celebration plan'),
+  impactDimension: z.string().default('guest_experience'),
+  inputType: z.enum(['single_choice', 'multiple_choice', 'text', 'currency', 'number', 'date']).default('single_choice'),
   options: z.array(AdaptiveQuestionOptionSchema).default([]),
   allowSkip: z.boolean().default(true),
   allowNotSure: z.boolean().default(true),
@@ -296,10 +296,10 @@ export const AdaptiveQuestionSchema = z.object({
 export type AdaptiveQuestion = z.infer<typeof AdaptiveQuestionSchema>;
 
 export const DiscoveryTurnResponseSchema = z.object({
-  intent: z.string(),
-  updatedBrief: EventBriefSchema,
-  isReadyForDraft: z.boolean(),
-  nextQuestion: AdaptiveQuestionSchema.optional(),
+  intent: z.string().default('explore_brief'),
+  updatedBrief: EventBriefSchema.optional(),
+  isReadyForDraft: z.boolean().default(false),
+  nextQuestion: AdaptiveQuestionSchema.nullish(),
   assumptionsMade: z.array(z.string()).default([]),
   whatTrellisKnows: z.array(z.string()).default([]),
 });

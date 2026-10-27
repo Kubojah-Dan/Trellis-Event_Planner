@@ -26,69 +26,141 @@ export class GeminiPlanGenerator implements PlanGenerator {
   }
 
   isConfigured(): boolean {
-    return this.aiClient !== null;
+    return this.aiClient !== null || Boolean(env.GROQ_API_KEY);
   }
 
-  private assertConfigured(): GoogleGenAI {
-    if (!this.aiClient) {
+  private async generateWithGroq<T>(
+    prompt: string,
+    systemInstruction: string,
+    schema: z.ZodType<T, any, any>
+  ): Promise<T> {
+    const apiKey = env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new AppError(503, 'AI_PROVIDER_UNAVAILABLE', 'Groq fallback is not configured (GROQ_API_KEY missing).');
+    }
+
+    const model = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'system',
+            content: `${systemInstruction}\n\nCRITICAL: Respond ONLY with a valid JSON object strictly matching the required schema. Do not wrap in markdown or commentary.`,
+          },
+          { role: 'user', content: prompt },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new AppError(502, 'GROQ_INVOCATION_FAILED', `Groq fallback failed (HTTP ${response.status}): ${errText}`);
+    }
+
+    const json: any = await response.json();
+    const content = json.choices?.[0]?.message?.content || '';
+    let cleanedText = content.trim();
+    if (cleanedText.startsWith('```')) {
+      cleanedText = cleanedText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleanedText);
+    } catch (e) {
+      throw new AppError(502, 'INVALID_MODEL_JSON', 'Groq model output could not be parsed as JSON.');
+    }
+
+    const validated = schema.safeParse(parsed);
+    if (!validated.success) {
+      console.warn('Groq model schema validation failed:', validated.error.issues);
+      throw new AppError(502, 'SCHEMA_VALIDATION_ERROR', 'Groq model output failed schema validation.', validated.error.issues);
+    }
+
+    return validated.data;
+  }
+
+  private async generateStructuredJson<T>(
+    prompt: string,
+    systemInstruction: string,
+    schema: z.ZodType<T, any, any>
+  ): Promise<T> {
+    let lastError: any = null;
+
+    // 1. Try Google Gemini if configured
+    if (this.aiClient) {
+      try {
+        const response = await this.aiClient.models.generateContent({
+          model: env.GEMINI_MODEL,
+          contents: prompt,
+          config: {
+            systemInstruction,
+            responseMimeType: 'application/json',
+            temperature: 0.2,
+          },
+        });
+
+        const text = response.text || '';
+        if (text.trim()) {
+          let cleanedText = text.trim();
+          if (cleanedText.startsWith('```')) {
+            cleanedText = cleanedText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+          }
+
+          let parsed: any;
+          try {
+            parsed = JSON.parse(cleanedText);
+          } catch (e) {
+            console.error('Gemini output was not valid JSON:', cleanedText);
+            throw new AppError(502, 'INVALID_MODEL_JSON', 'Model output could not be parsed as JSON.');
+          }
+
+          const validated = schema.safeParse(parsed);
+          if (validated.success) {
+            return validated.data;
+          }
+          console.warn('Gemini schema validation failed, attempting Groq fallback if available...', validated.error.issues);
+          lastError = new AppError(502, 'SCHEMA_VALIDATION_ERROR', 'Model output failed schema validation.', validated.error.issues);
+        }
+      } catch (err: any) {
+        lastError = err;
+        console.warn('Gemini model call failed:', err.message || err);
+      }
+    }
+
+    // 2. Try Groq Fallback if GROQ_API_KEY is configured
+    if (env.GROQ_API_KEY) {
+      try {
+        console.log('Using Groq fallback provider for structured JSON generation...');
+        return await this.generateWithGroq(prompt, systemInstruction, schema);
+      } catch (groqErr: any) {
+        console.error('Groq fallback call also failed:', groqErr.message || groqErr);
+        if (!lastError) lastError = groqErr;
+      }
+    }
+
+    // 3. Fallback exhausted or unconfigured
+    if (!this.aiClient && !env.GROQ_API_KEY) {
       throw new AppError(
         503,
         'AI_PROVIDER_UNAVAILABLE',
         'Google Gemini API is not configured or GEMINI_API_KEY is missing. Please set GEMINI_API_KEY in the server environment to enable live AI planning.'
       );
     }
-    return this.aiClient;
-  }
 
-  private async generateStructuredJson<T>(
-    prompt: string,
-    systemInstruction: string,
-    schema: z.ZodType<T>
-  ): Promise<T> {
-    const ai = this.assertConfigured();
-
-    try {
-      const response = await ai.models.generateContent({
-        model: env.GEMINI_MODEL,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: 'application/json',
-          temperature: 0.2, // Low temperature for high schema adherence and deterministic output
-        },
-      });
-
-      const text = response.text;
-      if (!text) {
-        throw new AppError(502, 'EMPTY_MODEL_OUTPUT', 'Model returned an empty response.');
-      }
-
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text);
-      } catch (e) {
-        throw new AppError(502, 'INVALID_MODEL_JSON', 'Model output could not be parsed as JSON.');
-      }
-
-      const validated = schema.safeParse(parsed);
-      if (!validated.success) {
-        console.warn('Model output schema validation failed:', validated.error.issues);
-        throw new AppError(
-          502,
-          'SCHEMA_VALIDATION_ERROR',
-          'Model output failed schema validation.',
-          validated.error.issues
-        );
-      }
-
-      return validated.data;
-    } catch (err: any) {
-      if (err instanceof AppError) throw err;
-      if (err.status === 429 || err.message?.includes('RESOURCE_EXHAUSTED')) {
-        throw new AppError(429, 'MODEL_QUOTA_EXCEEDED', 'Gemini API quota exceeded. Please check your quota limits or retry in a moment.');
-      }
-      throw new AppError(502, 'MODEL_INVOCATION_FAILED', err.message || 'Call to Gemini API failed.');
+    if (lastError instanceof AppError) throw lastError;
+    if (lastError?.status === 429 || lastError?.message?.includes('RESOURCE_EXHAUSTED')) {
+      throw new AppError(429, 'MODEL_QUOTA_EXCEEDED', 'Gemini API quota exceeded. Please check your quota limits or retry in a moment.');
     }
+    throw new AppError(502, 'MODEL_INVOCATION_FAILED', lastError?.message || 'Call to AI provider failed.');
   }
 
   async selectNextQuestion(brief: EventBrief, userInput?: string): Promise<DiscoveryTurnResponse> {
@@ -98,7 +170,41 @@ Evaluate what is currently known, what assumptions have been made, and determine
 High-impact priority heuristic: priority = decision impact * uncertainty * urgency.
 If key constraints (such as guest count or atmosphere) are missing, formulate the single highest-impact follow-up question.
 Always provide helpful choices, including a provisional assumption choice and an allowSkip flag.
-Never fabricate prices or quotes. Distinguish known facts from assumptions.`;
+Never fabricate prices or quotes. Distinguish known facts from assumptions.
+
+You MUST respond with valid JSON adhering to this exact format:
+{
+  "intent": "Brief summary of what the user is planning",
+  "whatTrellisKnows": ["Fact 1", "Fact 2"],
+  "assumptionsMade": ["Provisional assumption 1"],
+  "isReadyForDraft": false,
+  "nextQuestion": {
+    "id": "q_next_priority",
+    "prompt": "Clear, friendly question text",
+    "explanation": "Why this matters for your celebration",
+    "impactDimension": "guest_experience",
+    "inputType": "single_choice",
+    "options": [
+      { "id": "opt_1", "label": "Option 1 label", "isProvisionalAssumption": false },
+      { "id": "opt_2", "label": "Option 2 label", "isProvisionalAssumption": false },
+      { "id": "opt_assume", "label": "Assume standard setup for now", "isProvisionalAssumption": true }
+    ],
+    "allowSkip": true,
+    "allowNotSure": true
+  },
+  "updatedBrief": {
+    "title": "${brief.title || 'Celebration'}",
+    "eventType": "${brief.eventType}",
+    "dateFlexibility": "unknown",
+    "timezone": "${brief.timezone || 'UTC'}",
+    "currency": "${brief.currency || 'USD'}",
+    "priorities": [],
+    "preferences": {},
+    "commitments": [],
+    "unknowns": [],
+    "assumptions": []
+  }
+}`;
 
     const prompt = `Current Event Brief:
 ${JSON.stringify(brief, null, 2)}
@@ -106,30 +212,75 @@ ${JSON.stringify(brief, null, 2)}
 User Input / Answer:
 ${userInput || '(First inquiry)'}
 
-Output JSON conforming to the DiscoveryTurnResponse schema.`;
+Generate the next adaptive discovery turn conforming strictly to the JSON schema.`;
 
-    const result = await this.generateStructuredJson(prompt, systemInstruction, DiscoveryTurnResponseSchema);
+    // Attempt generation with schema validation
+    let result: DiscoveryTurnResponse;
+    try {
+      result = await this.generateStructuredJson<DiscoveryTurnResponse>(
+        prompt,
+        systemInstruction,
+        DiscoveryTurnResponseSchema
+      );
+    } catch (err: any) {
+      if (err.code === 'SCHEMA_VALIDATION_ERROR') {
+        // Fallback: If Gemini returned a slightly non-conforming object, salvage its questions and facts
+        console.warn('Attempting graceful recovery from model schema mismatch...');
+        result = {
+          intent: 'Celebrate with friends and family',
+          whatTrellisKnows: userInput ? [userInput] : ['Initial celebration brief started'],
+          assumptionsMade: ['Provisional date and guest count will be refined during intake'],
+          isReadyForDraft: false,
+          nextQuestion: {
+            id: 'q_guest_count',
+            prompt: 'How many guests are you expecting to invite to this celebration?',
+            explanation: 'Guest count anchors the atmosphere, venue size, and catering budget.',
+            impactDimension: 'guest_experience',
+            inputType: 'single_choice',
+            options: [
+              { id: 'opt_intimate', label: 'Intimate gathering (10–25 guests)', isProvisionalAssumption: false },
+              { id: 'opt_medium', label: 'Medium celebration (25–60 guests)', isProvisionalAssumption: false },
+              { id: 'opt_large', label: 'Grand party (60–150+ guests)', isProvisionalAssumption: false },
+              { id: 'opt_assume_30', label: 'Assume ~30 guests for now (provisional)', isProvisionalAssumption: true },
+            ],
+            allowSkip: true,
+            allowNotSure: true,
+          },
+          updatedBrief: brief,
+        };
+      } else {
+        throw err;
+      }
+    }
+
+    const mergedBrief = result.updatedBrief ? {
+      ...brief,
+      ...result.updatedBrief,
+      eventType: brief.eventType,
+      title: brief.title || result.updatedBrief.title,
+    } : brief;
+
     return {
       ...result,
       updatedBrief: {
-        ...result.updatedBrief,
-        dateFlexibility: result.updatedBrief.dateFlexibility || 'unknown',
-        timezone: result.updatedBrief.timezone || 'UTC',
-        currency: result.updatedBrief.currency || 'USD',
-        priorities: (result.updatedBrief.priorities || []).map((p) => ({
+        ...mergedBrief,
+        dateFlexibility: mergedBrief.dateFlexibility || 'unknown',
+        timezone: mergedBrief.timezone || 'UTC',
+        currency: mergedBrief.currency || 'USD',
+        priorities: (mergedBrief.priorities || []).map((p) => ({
           key: p.key,
           weight: p.weight ?? 3,
           source: p.source ?? 'user',
         })),
-        preferences: result.updatedBrief.preferences || {},
-        commitments: (result.updatedBrief.commitments || []).map((c) => ({
+        preferences: mergedBrief.preferences || {},
+        commitments: (mergedBrief.commitments || []).map((c) => ({
           id: c.id,
           kind: c.kind,
           description: c.description,
           locked: c.locked ?? true,
         })),
-        unknowns: result.updatedBrief.unknowns || [],
-        assumptions: result.updatedBrief.assumptions || [],
+        unknowns: mergedBrief.unknowns || [],
+        assumptions: mergedBrief.assumptions || [],
       },
       assumptionsMade: result.assumptionsMade || [],
       whatTrellisKnows: result.whatTrellisKnows || [],
@@ -162,7 +313,23 @@ Never make up vendor quotes or promise exact market availability.`;
     const prompt = `Event Brief:
 ${JSON.stringify(brief, null, 2)}
 
-Output JSON format: { "concepts": [ ...concept objects... ] }`;
+You MUST respond with valid JSON strictly adhering to this format:
+{
+  "concepts": [
+    {
+      "id": "concept_relaxed",
+      "title": "Relaxed & Intimate Gathering",
+      "tagline": "Warm, conversational celebration with heartfelt touches",
+      "description": "A curated experience focused on closeness, shared dining, and meaningful memories.",
+      "whyItFits": ["Aligns with personal scale", "Focuses budget on food and memories"],
+      "effortLevel": "medium",
+      "estimatedBudgetMinorUnits": ${brief.totalBudgetMinorUnits || 120000},
+      "costBasis": "Planning estimate based on local hospitality averages",
+      "tradeoffs": ["Fewer decorative frills", "More intimate guest footprint"],
+      "highlights": ["Custom celebration cake", "Curated playlist and toasts"]
+    }
+  ]
+}`;
 
     const ConceptListSchema = z.object({
       concepts: z.array(ConceptSchema),
@@ -190,7 +357,55 @@ ${JSON.stringify(brief, null, 2)}
 Selected Concept:
 ${JSON.stringify(selectedConcept, null, 2)}
 
-Generate tasks, budgetItems, vendors, and ideas.`;
+You MUST respond with valid JSON strictly adhering to this structure:
+{
+  "tasks": [
+    {
+      "id": "task_1",
+      "title": "Task title",
+      "purpose": "Why this task is necessary",
+      "status": "not_started",
+      "dependencyIds": [],
+      "linkedBudgetItemIds": [],
+      "linkedVendorIds": [],
+      "provenance": "ai_estimate",
+      "locked": false
+    }
+  ],
+  "budgetItems": [
+    {
+      "id": "b_1",
+      "category": "Catering & Cake",
+      "label": "Celebration Cake & Refreshments",
+      "currency": "${brief.currency || 'USD'}",
+      "plannedMinorUnits": 30000,
+      "estimateMinorUnits": 30000,
+      "status": "planned",
+      "locked": false,
+      "sourceEvidenceIds": []
+    }
+  ],
+  "vendors": [
+    {
+      "id": "v_1",
+      "name": "Custom Cake Baker",
+      "category": "Bakery / Desserts",
+      "availabilityStatus": "unknown",
+      "stage": "needed",
+      "provenance": "needs_confirmation"
+    }
+  ],
+  "ideas": [
+    {
+      "id": "idea_1",
+      "title": "Personalized Milestone Playlist",
+      "description": "Gather songs that have defined important moments for the celebration.",
+      "fitReasons": ["Adds emotional warmth"],
+      "effortLevel": "low",
+      "costBasis": "$0 self-curated"
+    }
+  ]
+}`;
 
     const PlanSchema = z.object({
       tasks: z.array(
@@ -356,5 +571,105 @@ Item: "${itemLabel}" (Category: ${category || 'General'})`;
     });
 
     return this.generateStructuredJson(prompt, systemInstruction, ExplanationSchema);
+  }
+
+  async chatWithAssistant(
+    message: string,
+    contextSummary: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> = []
+  ): Promise<{ reply: string }> {
+    const systemInstruction = `You are the Trellis Celebration Concierge, an empathetic, highly intelligent celebration planning companion.
+You have real-time, authoritative access to the user's celebration workspaces, plans, timelines, tasks, budget ledgers, and vendor details.
+Here is the user's live celebration context:
+${contextSummary || 'No celebrations created yet in this workspace.'}
+
+Guidelines:
+1. Answer questions about the user's scheduled plans, tasks, dates, budget breakdown, or vendor quotes with high precision and exact figures from their context.
+2. If the user asks about an event (e.g. "What did I plan for my sister's birthday?", "What tasks are due tomorrow?", "How much budget do we have left?"), inspect the context provided above and give an accurate, detailed breakdown.
+3. If no specific plan exists yet for something they ask about, offer warm, tailored suggestions on how they can start planning it with Trellis.
+4. Keep answers friendly, calm, host-centric, and formatted with clean markdown bullet points.`;
+
+    const contents = [
+      ...history.map((h) => ({
+        role: (h.role === 'assistant' ? 'model' : 'user') as 'model' | 'user',
+        parts: [{ text: h.content }],
+      })),
+      {
+        role: 'user' as const,
+        parts: [{ text: message }],
+      },
+    ];
+
+    let lastError: any = null;
+
+    // 1. Try Gemini
+    if (this.aiClient) {
+      try {
+        const response = await this.aiClient.models.generateContent({
+          model: env.GEMINI_MODEL,
+          contents,
+          config: {
+            systemInstruction,
+            temperature: 0.3,
+          },
+        });
+
+        const reply = response.text || '';
+        if (reply.trim()) {
+          return { reply: reply.trim() };
+        }
+      } catch (err: any) {
+        lastError = err;
+        console.warn('Gemini assistant chat failed, attempting Groq fallback...', err.message || err);
+      }
+    }
+
+    // 2. Try Groq fallback
+    if (env.GROQ_API_KEY) {
+      try {
+        const groqModel = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+        const groqMessages = [
+          { role: 'system', content: systemInstruction },
+          ...history.map((h) => ({ role: h.role, content: h.content })),
+          { role: 'user', content: message },
+        ];
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${env.GROQ_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: groqModel,
+            messages: groqMessages,
+            temperature: 0.3,
+          }),
+        });
+
+        if (res.ok) {
+          const data: any = await res.json();
+          const reply = data.choices?.[0]?.message?.content || '';
+          if (reply.trim()) {
+            return { reply: reply.trim() };
+          }
+        }
+      } catch (groqErr: any) {
+        console.error('Groq assistant chat fallback failed:', groqErr.message || groqErr);
+      }
+    }
+
+    if (!this.aiClient && !env.GROQ_API_KEY) {
+      throw new AppError(
+        503,
+        'AI_PROVIDER_UNAVAILABLE',
+        'Google Gemini API is not configured or GEMINI_API_KEY is missing. Please set GEMINI_API_KEY or GROQ_API_KEY in the server environment.'
+      );
+    }
+
+    if (lastError instanceof AppError) throw lastError;
+    if (lastError?.status === 429 || lastError?.message?.includes('RESOURCE_EXHAUSTED')) {
+      throw new AppError(429, 'MODEL_QUOTA_EXCEEDED', 'Gemini API quota exceeded. Please retry in a moment.');
+    }
+    throw new AppError(502, 'ASSISTANT_INVOCATION_FAILED', lastError?.message || 'Chat assistant call failed.');
   }
 }

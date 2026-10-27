@@ -4,6 +4,7 @@ import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { Toaster } from 'sonner';
 import { AuthModal } from '../auth/AuthModal';
+import { CelebrationChatbot } from '../chat/CelebrationChatbot';
 
 interface AppLayoutProps {
   currentEventTitle?: string;
@@ -31,6 +32,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ currentEventTitle, syncSta
           </main>
         </div>
       </div>
+      <CelebrationChatbot />
       <AuthModal />
       <Toaster position="bottom-right" richColors />
     </div>
