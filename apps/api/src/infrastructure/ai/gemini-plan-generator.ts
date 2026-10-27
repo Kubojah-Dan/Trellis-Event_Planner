@@ -18,9 +18,10 @@ import crypto from 'node:crypto';
 export class GeminiPlanGenerator implements PlanGenerator {
   private aiClient: GoogleGenAI | null = null;
 
-  constructor() {
-    if (env.GEMINI_API_KEY && env.GEMINI_API_KEY !== 'safe_placeholder_for_local_env' && !env.GEMINI_API_KEY.includes('PLACEHOLDER')) {
-      this.aiClient = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+  constructor(apiKey?: string | null) {
+    const key = apiKey !== undefined ? (apiKey || undefined) : env.GEMINI_API_KEY;
+    if (key && key !== 'safe_placeholder_for_local_env' && !key.includes('PLACEHOLDER')) {
+      this.aiClient = new GoogleGenAI({ apiKey: key });
     }
   }
 

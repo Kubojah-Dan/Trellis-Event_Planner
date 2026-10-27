@@ -48,8 +48,8 @@ export const IdeasPage: React.FC = () => {
 
   if (isLoading || !aggregate) {
     return (
-      <div className="editorial-card text-center py-20">
-        <div className="inline-block w-8 h-8 border-2 border-evergreen-900 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="glass-card text-center py-20 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <div className="inline-block w-8 h-8 border-2 border-bark border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-ink-muted">Loading personalized ideas...</p>
       </div>
     );
@@ -120,21 +120,21 @@ export const IdeasPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase mb-2">
             Personalization & Atmosphere
-          </span>
-          <h1 className="font-editorial text-3xl font-bold text-evergreen-900">
-            Personalized Touches & Creative Ideas
+          </div>
+          <h1 className="font-serif text-3xl sm:text-5xl font-normal text-bark">
+            Personalized Touches & <span className="italic text-terra">Creative Ideas</span>
           </h1>
-          <p className="text-xs text-ink-muted mt-1">
+          <p className="text-xs text-ink-muted mt-1 max-w-xl leading-relaxed">
             Curated details tailored to your specific preferences. All ideas explain why they fit your brief.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 self-start">
+        <div className="flex items-center space-x-2.5 self-start">
           <button
             onClick={() => setShowDraftModal(true)}
-            className="btn-accent text-xs flex items-center space-x-1.5"
+            className="btn-pill-terra text-xs flex items-center space-x-1.5 px-4 py-2.5"
           >
             <Sparkles className="w-4 h-4" />
             <span>Draft Invitation / Speech</span>
@@ -142,7 +142,7 @@ export const IdeasPage: React.FC = () => {
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="btn-primary text-xs flex items-center space-x-1.5"
+            className="btn-pill-primary text-xs flex items-center space-x-1.5 px-4 py-2.5"
           >
             <Plus className="w-4 h-4" />
             <span>Add Custom Idea</span>
@@ -151,9 +151,9 @@ export const IdeasPage: React.FC = () => {
       </div>
 
       {/* Ideas Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {ideas.length === 0 ? (
-          <div className="md:col-span-2 editorial-card text-center py-12 text-ink-muted text-xs">
+          <div className="md:col-span-2 glass-card text-center py-12 text-ink-muted text-xs rounded-2xl border border-glass-border/70 backdrop-blur-md">
             No ideas created yet. Click &quot;Add Custom Idea&quot; to add celebration details.
           </div>
         ) : (
@@ -161,27 +161,29 @@ export const IdeasPage: React.FC = () => {
             return (
               <div
                 key={idea.id}
-                className={`editorial-card p-6 space-y-4 transition-all flex flex-col justify-between ${
-                  idea.selected ? 'ring-2 ring-evergreen-900 border-evergreen-900' : 'bg-surface'
+                className={`glass-card p-6 rounded-3xl space-y-4 transition-all duration-200 border flex flex-col justify-between backdrop-blur-md ${
+                  idea.selected
+                    ? 'border-bark ring-2 ring-bark/20 shadow-card-float bg-white/90'
+                    : 'border-glass-border/70 bg-white/70 hover:border-sand hover:shadow-card-float'
                 }`}
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-evergreen-50 text-evergreen-800 border border-evergreen-100">
+                      <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sand/50 text-moss border border-sand/70">
                         Effort: {idea.effortLevel}
                       </span>
-                      <h3 className="font-editorial text-xl font-bold text-ink mt-2">
+                      <h3 className="font-serif text-2xl font-normal text-bark mt-2">
                         {idea.title}
                       </h3>
                     </div>
 
                     <button
                       onClick={() => handleToggleSelected(idea)}
-                      className="p-1.5 rounded-full hover:bg-paper text-coral-500 transition-colors"
+                      className="p-2 rounded-full hover:bg-sand/30 text-terra transition-colors"
                       title={idea.selected ? 'Favorited' : 'Add to favorites'}
                     >
-                      <Heart className={`w-5 h-5 ${idea.selected ? 'fill-coral-500' : ''}`} />
+                      <Heart className={`w-5 h-5 ${idea.selected ? 'fill-terra text-terra' : 'text-sand hover:text-terra'}`} />
                     </button>
                   </div>
 
@@ -190,34 +192,34 @@ export const IdeasPage: React.FC = () => {
                   </p>
 
                   {idea.fitReasons && idea.fitReasons.length > 0 && (
-                    <div className="p-3 bg-paper rounded-lg border border-warmgray-200 space-y-1 text-xs">
-                      <span className="text-[10px] uppercase font-bold text-evergreen-800 block">
+                    <div className="p-3.5 bg-sand/30 rounded-2xl border border-sand/50 space-y-1 text-xs">
+                      <span className="text-[10px] uppercase font-bold text-moss block">
                         Why this fits your celebration
                       </span>
                       {idea.fitReasons.map((reason, idx) => (
                         <div key={idx} className="flex items-start space-x-1.5 text-ink-muted">
-                          <span className="text-emerald-600 font-bold shrink-0">✓</span>
-                          <span>{reason}</span>
+                          <span className="text-moss font-bold shrink-0">✓</span>
+                          <span className="leading-relaxed">{reason}</span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-warmgray-100 flex items-center justify-between text-xs">
+                <div className="pt-3.5 border-t border-glass-border/80 flex items-center justify-between text-xs">
                   <button
                     onClick={() => handleToggleLock(idea)}
-                    className={`inline-flex items-center space-x-1 px-2 py-1 rounded text-[11px] font-semibold transition-colors ${
+                    className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${
                       idea.locked
-                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                        : 'bg-warmgray-100 text-ink-muted hover:bg-warmgray-200'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                        : 'bg-sand/40 text-ink-muted hover:bg-sand/70'
                     }`}
                   >
-                    {idea.locked ? <Lock className="w-3.5 h-3.5 text-amber-700" /> : <Unlock className="w-3.5 h-3.5" />}
+                    {idea.locked ? <Lock className="w-3.5 h-3.5 text-amber-800" /> : <Unlock className="w-3.5 h-3.5" />}
                     <span>{idea.locked ? 'Locked' : 'Unlocked'}</span>
                   </button>
 
-                  <span className="text-[10px] uppercase font-bold text-ink-light">
+                  <span className="text-[10px] uppercase font-bold text-ink-subtle">
                     {idea.provenance.replace('_', ' ')}
                   </span>
                 </div>
@@ -230,25 +232,25 @@ export const IdeasPage: React.FC = () => {
       {/* Creative Assistant Draft Modal */}
       {showDraftModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-surface rounded-xl max-w-lg w-full p-6 space-y-4 shadow-warm-lg border border-warmgray-200 text-xs">
-            <h3 className="font-editorial text-xl font-bold text-evergreen-900 flex items-center space-x-2">
-              <Sparkles className="w-5 h-5 text-coral-500" />
+          <div className="glass-card bg-cream rounded-3xl max-w-lg w-full p-7 space-y-5 shadow-card-hover border border-glass-border text-xs">
+            <h3 className="font-serif text-2xl font-normal text-bark flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-terra" />
               <span>Creative Celebration Assistant</span>
             </h3>
 
-            <p className="text-ink-muted">
+            <p className="text-ink-muted leading-relaxed">
               Trellis generates wording grounded in your real celebration parameters—no generic clichés.
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Drafting Objective
                 </label>
                 <select
                   value={draftPrompt}
                   onChange={(e) => setDraftPrompt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 font-medium"
                 >
                   <option value="Draft an invitation message for our guests">
                     Digital Invitation Wording
@@ -266,21 +268,21 @@ export const IdeasPage: React.FC = () => {
                 type="button"
                 onClick={handleRunCreativeDraft}
                 disabled={isDrafting}
-                className="btn-primary w-full py-2.5 flex items-center justify-center space-x-2"
+                className="btn-pill-primary w-full py-3 flex items-center justify-center space-x-2 text-xs"
               >
                 {isDrafting ? <span>Synthesizing...</span> : <span>Generate Tailored Copy</span>}
               </button>
 
               {draftResult && (
                 <div className="space-y-2 pt-2">
-                  <label className="block font-semibold text-ink uppercase tracking-wider">
+                  <label className="block font-bold text-bark uppercase tracking-wider">
                     Generated Draft (Editable)
                   </label>
                   <textarea
                     value={draftResult}
                     onChange={(e) => setDraftResult(e.target.value)}
                     rows={7}
-                    className="w-full p-3 rounded-lg border border-warmgray-200 bg-paper text-ink font-mono text-xs focus-ring"
+                    className="w-full p-3.5 rounded-2xl border border-glass-border/80 bg-white/90 text-bark font-mono text-xs focus:outline-none focus:ring-2 focus:ring-terra/30"
                   />
                 </div>
               )}
@@ -293,7 +295,7 @@ export const IdeasPage: React.FC = () => {
                   setShowDraftModal(false);
                   setDraftResult('');
                 }}
-                className="btn-secondary text-xs"
+                className="btn-pill-secondary text-xs px-4 py-2"
               >
                 Close
               </button>
@@ -305,14 +307,14 @@ export const IdeasPage: React.FC = () => {
       {/* Add Custom Idea Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-surface rounded-xl max-w-md w-full p-6 space-y-4 shadow-warm-lg border border-warmgray-200">
-            <h3 className="font-editorial text-xl font-bold text-evergreen-900">
+          <div className="glass-card bg-cream rounded-3xl max-w-md w-full p-7 space-y-5 shadow-card-hover border border-glass-border">
+            <h3 className="font-serif text-2xl font-normal text-bark">
               Add Personalized Idea
             </h3>
 
             <form onSubmit={handleCreateIdea} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Idea Title
                 </label>
                 <input
@@ -320,13 +322,13 @@ export const IdeasPage: React.FC = () => {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. Polaroid Guestbook Station"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Description
                 </label>
                 <textarea
@@ -334,20 +336,20 @@ export const IdeasPage: React.FC = () => {
                   onChange={(e) => setNewDesc(e.target.value)}
                   rows={3}
                   placeholder="Describe the aesthetic, guest experience, or logistics..."
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                   required
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2.5 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="btn-secondary text-xs"
+                  className="btn-pill-secondary text-xs px-4 py-2"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary text-xs">
+                <button type="submit" className="btn-pill-primary text-xs px-5 py-2">
                   Save Idea
                 </button>
               </div>

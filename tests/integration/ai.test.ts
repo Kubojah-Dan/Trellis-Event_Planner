@@ -149,7 +149,7 @@ describe('AI Planning Integration - Discovery, Concepts & Invariant Adherence', 
 
   it('truthfully reports 503 error when Gemini is unconfigured without silently faking data', async () => {
     // Instantiate real GeminiPlanGenerator with no API key
-    const unconfiguredGenerator = new GeminiPlanGenerator();
+    const unconfiguredGenerator = new GeminiPlanGenerator(null);
     const serverWithRealGemini = createApp(new InMemoryEventRepository(), unconfiguredGenerator);
 
     const res = await request(serverWithRealGemini.app)

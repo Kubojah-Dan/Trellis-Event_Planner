@@ -11,6 +11,11 @@ export function getFirebaseAdminApp(): admin.app.App {
     return appInstance;
   }
 
+  if (!env.USE_FIREBASE_EMULATOR) {
+    delete process.env.FIRESTORE_EMULATOR_HOST;
+    delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  }
+
   // Use Firebase Project ID from env; in Cloud Run, Application Default Credentials will be automatically picked up
   appInstance = admin.initializeApp({
     projectId: env.FIREBASE_PROJECT_ID,

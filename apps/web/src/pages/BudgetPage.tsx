@@ -61,8 +61,8 @@ export const BudgetPage: React.FC = () => {
 
   if (isLoading || !aggregate) {
     return (
-      <div className="editorial-card text-center py-20">
-        <div className="inline-block w-8 h-8 border-2 border-evergreen-900 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="glass-card text-center py-20 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <div className="inline-block w-8 h-8 border-2 border-bark border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-ink-muted">Loading budget ledger...</p>
       </div>
     );
@@ -106,20 +106,20 @@ export const BudgetPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase mb-2">
             Authoritative Ledger
-          </span>
-          <h1 className="font-editorial text-3xl font-bold text-evergreen-900">
-            Budget & Spend Control
+          </div>
+          <h1 className="font-serif text-3xl sm:text-5xl font-normal text-bark">
+            Budget & <span className="italic text-terra">Spend Control</span>
           </h1>
-          <p className="text-xs text-ink-muted mt-1">
+          <p className="text-xs text-ink-muted mt-1 max-w-xl leading-relaxed">
             All arithmetic is calculated deterministically in integer minor units. Locked items are protected during AI replanning.
           </p>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn-primary text-xs flex items-center space-x-1.5 self-start"
+          className="btn-pill-primary text-xs flex items-center space-x-1.5 self-start px-5 py-2.5"
         >
           <Plus className="w-4 h-4" />
           <span>Add Line Item</span>
@@ -128,31 +128,31 @@ export const BudgetPage: React.FC = () => {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="editorial-card p-5">
-          <span className="text-[11px] uppercase font-bold text-ink-muted block mb-1">
+        <div className="glass-card p-6 rounded-2xl border border-glass-border/70 backdrop-blur-md">
+          <span className="text-[11px] uppercase font-bold text-ink-subtle block mb-1 tracking-wider">
             Budget Ceiling
           </span>
-          <span className="font-editorial text-2xl font-bold text-ink">
+          <span className="font-serif text-3xl font-normal text-bark block">
             {formatMoney(summary.targetBudgetMinorUnits, currency)}
           </span>
           <span className="text-[11px] text-ink-muted block mt-1">Stated event target</span>
         </div>
 
-        <div className="editorial-card p-5">
-          <span className="text-[11px] uppercase font-bold text-ink-muted block mb-1">
+        <div className="glass-card p-6 rounded-2xl border border-glass-border/70 backdrop-blur-md">
+          <span className="text-[11px] uppercase font-bold text-ink-subtle block mb-1 tracking-wider">
             Total Forecast
           </span>
-          <span className="font-editorial text-2xl font-bold text-ink">
+          <span className="font-serif text-3xl font-normal text-bark block">
             {formatMoney(summary.forecastTotalMinorUnits, currency)}
           </span>
           <span className="text-[11px] text-ink-muted block mt-1">Committed + Estimated</span>
         </div>
 
-        <div className="editorial-card p-5">
-          <span className="text-[11px] uppercase font-bold text-ink-muted block mb-1">
+        <div className="glass-card p-6 rounded-2xl border border-glass-border/70 backdrop-blur-md">
+          <span className="text-[11px] uppercase font-bold text-ink-subtle block mb-1 tracking-wider">
             Committed / Paid
           </span>
-          <span className="font-editorial text-2xl font-bold text-evergreen-800">
+          <span className="font-serif text-3xl font-normal text-moss block">
             {formatMoney(summary.committedTotalMinorUnits, currency)}
           </span>
           <span className="text-[11px] text-ink-muted block mt-1">
@@ -161,33 +161,35 @@ export const BudgetPage: React.FC = () => {
         </div>
 
         <div
-          className={`editorial-card p-5 ${
-            summary.isOverBudget ? 'bg-coral-50/70 border-coral-200' : 'bg-emerald-50/70 border-emerald-200'
+          className={`glass-card p-6 rounded-2xl border backdrop-blur-md ${
+            summary.isOverBudget
+              ? 'bg-rose-50/70 border-rose-200 text-rose-900'
+              : 'border-glass-border/70 text-moss'
           }`}
         >
-          <span className="text-[11px] uppercase font-bold text-ink-muted block mb-1">
-            {summary.isOverBudget ? 'Over Budget' : 'Variance / Contingency'}
+          <span className="text-[11px] uppercase font-bold text-ink-subtle block mb-1 tracking-wider">
+            {summary.isOverBudget ? 'Over Budget' : 'Contingency / Buffer'}
           </span>
           <span
-            className={`font-editorial text-2xl font-bold ${
-              summary.isOverBudget ? 'text-coral-700' : 'text-emerald-800'
+            className={`font-serif text-3xl font-normal block ${
+              summary.isOverBudget ? 'text-terra' : 'text-moss'
             }`}
           >
             {formatMoney(Math.abs(summary.varianceMinorUnits), currency)}
           </span>
           <span className="text-[11px] text-ink-muted block mt-1">
-            {summary.isOverBudget ? 'Action required to balance' : 'Remaining buffer'}
+            {summary.isOverBudget ? 'Action required to balance' : 'Remaining safety buffer'}
           </span>
         </div>
       </div>
 
       {/* Over budget banner alert if applicable */}
       {summary.isOverBudget && (
-        <div className="p-4 rounded-xl bg-coral-50 border border-coral-200 flex items-start space-x-3 text-xs text-coral-900">
-          <AlertTriangle className="w-5 h-5 text-coral-600 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-start space-x-3 text-xs text-amber-900">
+          <AlertTriangle className="w-5 h-5 text-terra shrink-0 mt-0.5" />
           <div className="space-y-1">
             <span className="font-bold text-sm block">Budget Ceiling Exceeded</span>
-            <p>
+            <p className="leading-relaxed">
               The current forecast exceeds your stated ceiling by {formatMoney(summary.overBudgetAmountMinorUnits, currency)}.
               Adjust allocations or request an AI revision to propose feasible cost-saving trade-offs.
             </p>
@@ -196,13 +198,13 @@ export const BudgetPage: React.FC = () => {
       )}
 
       {/* Category Allocation Progress Bars */}
-      <div className="editorial-card p-6 space-y-4">
-        <h3 className="font-editorial text-lg font-bold text-evergreen-900 flex items-center space-x-2">
-          <PieChartIcon className="w-4 h-4 text-evergreen-800" />
+      <div className="glass-card p-6 sm:p-8 space-y-5 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <h3 className="font-serif text-xl font-normal text-bark flex items-center space-x-2">
+          <PieChartIcon className="w-4 h-4 text-moss" />
           <span>Category Allocations</span>
         </h3>
 
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {Object.values(summary.categoryBreakdown).map((cat) => {
             const pct =
               summary.forecastTotalMinorUnits > 0
@@ -210,16 +212,16 @@ export const BudgetPage: React.FC = () => {
                 : 0;
 
             return (
-              <div key={cat.category} className="space-y-1 text-xs">
+              <div key={cat.category} className="space-y-1.5 text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-ink">{cat.category}</span>
+                  <span className="font-semibold text-bark">{cat.category}</span>
                   <span className="text-ink-muted">
                     {formatMoney(cat.forecastMinorUnits, currency)} ({pct}%)
                   </span>
                 </div>
-                <div className="w-full bg-warmgray-200 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-sand/40 h-2.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-evergreen-800 h-full rounded-full transition-all"
+                    className="bg-bark h-full rounded-full transition-all duration-500"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -230,31 +232,33 @@ export const BudgetPage: React.FC = () => {
       </div>
 
       {/* Detailed Ledger Table */}
-      <div className="editorial-card p-0 overflow-hidden shadow-warm">
-        <div className="p-4 border-b border-warmgray-200 bg-paper/50 flex items-center justify-between">
-          <h3 className="font-editorial text-base font-bold text-evergreen-900">
+      <div className="glass-card rounded-3xl overflow-hidden border border-glass-border/70 backdrop-blur-md shadow-card-float">
+        <div className="p-5 border-b border-glass-border/80 bg-white/40 flex items-center justify-between">
+          <h3 className="font-serif text-xl font-normal text-bark">
             Line Items Breakdown
           </h3>
-          <span className="text-xs text-ink-muted">{budgetItems.length} items recorded</span>
+          <span className="text-xs px-3 py-1 rounded-full bg-sand/60 text-bark font-medium">
+            {budgetItems.length} items recorded
+          </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-warmgray-100 text-ink-muted uppercase font-semibold text-[10px] tracking-wider border-b border-warmgray-200">
+            <thead className="bg-sand/30 text-ink-subtle uppercase font-semibold text-[10px] tracking-wider border-b border-glass-border/80">
               <tr>
-                <th className="py-3 px-4">Item & Category</th>
+                <th className="py-3 px-5">Item & Category</th>
                 <th className="py-3 px-4">Planned</th>
                 <th className="py-3 px-4">Committed</th>
                 <th className="py-3 px-4">Paid</th>
                 <th className="py-3 px-4">Authoritative Forecast</th>
                 <th className="py-3 px-4">Protection</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-warmgray-100">
+            <tbody className="divide-y divide-glass-border/50">
               {budgetItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-ink-muted">
+                  <td colSpan={7} className="py-12 text-center text-ink-muted">
                     No budget items yet. Click &quot;Add Line Item&quot; to begin your ledger.
                   </td>
                 </tr>
@@ -262,37 +266,37 @@ export const BudgetPage: React.FC = () => {
                 budgetItems.map((item) => {
                   const itemForecast = calculateItemForecast(item);
                   return (
-                    <tr key={item.id} className="hover:bg-warmgray-50 transition-colors">
-                      <td className="py-3 px-4">
-                        <span className="font-semibold text-ink block">{item.label}</span>
+                    <tr key={item.id} className="hover:bg-white/60 transition-colors">
+                      <td className="py-3.5 px-5">
+                        <span className="font-semibold text-bark block">{item.label}</span>
                         <span className="text-[11px] text-ink-muted">{item.category}</span>
                       </td>
 
-                      <td className="py-3 px-4 font-medium text-ink">
+                      <td className="py-3.5 px-4 font-medium text-bark">
                         {formatMoney(item.plannedMinorUnits, currency)}
                       </td>
 
-                      <td className="py-3 px-4 text-ink-muted">
+                      <td className="py-3.5 px-4 text-ink-muted">
                         {item.committedMinorUnits
                           ? formatMoney(item.committedMinorUnits, currency)
                           : '—'}
                       </td>
 
-                      <td className="py-3 px-4 text-ink-muted">
+                      <td className="py-3.5 px-4 text-ink-muted">
                         {item.paidMinorUnits ? formatMoney(item.paidMinorUnits, currency) : '—'}
                       </td>
 
-                      <td className="py-3 px-4 font-bold text-evergreen-900">
+                      <td className="py-3.5 px-4 font-bold text-bark">
                         {formatMoney(itemForecast, currency)}
                       </td>
 
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-4">
                         <button
                           onClick={() => handleToggleLock(item)}
-                          className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
+                          className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
                             item.locked
-                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                              : 'bg-warmgray-100 text-ink-muted hover:bg-warmgray-200'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-xs'
+                              : 'bg-sand/40 text-ink-muted hover:bg-sand/70'
                           }`}
                           title={
                             item.locked
@@ -302,7 +306,7 @@ export const BudgetPage: React.FC = () => {
                         >
                           {item.locked ? (
                             <>
-                              <Lock className="w-3 h-3 text-amber-700" />
+                              <Lock className="w-3 h-3 text-amber-800" />
                               <span>Locked</span>
                             </>
                           ) : (
@@ -314,10 +318,10 @@ export const BudgetPage: React.FC = () => {
                         </button>
                       </td>
 
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-5 text-right">
                         <button
                           onClick={() => deleteMutation.mutate(item.id)}
-                          className="p-1 rounded hover:bg-coral-50 text-coral-600 transition-colors"
+                          className="p-1.5 rounded-full hover:bg-rose-50 text-ink-muted hover:text-terra transition-colors"
                           title="Delete line item"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -335,14 +339,14 @@ export const BudgetPage: React.FC = () => {
       {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-surface rounded-xl max-w-md w-full p-6 space-y-4 shadow-warm-lg border border-warmgray-200">
-            <h3 className="font-editorial text-xl font-bold text-evergreen-900">
+          <div className="glass-card bg-cream rounded-3xl max-w-md w-full p-7 space-y-5 shadow-card-hover border border-glass-border">
+            <h3 className="font-serif text-2xl font-normal text-bark">
               Add Budget Line Item
             </h3>
 
             <form onSubmit={handleCreateItem} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Item Label
                 </label>
                 <input
@@ -350,13 +354,13 @@ export const BudgetPage: React.FC = () => {
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="e.g. Photography package, Venue deposit"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Category
                 </label>
                 <input
@@ -364,12 +368,12 @@ export const BudgetPage: React.FC = () => {
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="e.g. Photography, Venue, Catering"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Planned Amount ({currency})
                 </label>
                 <input
@@ -378,20 +382,20 @@ export const BudgetPage: React.FC = () => {
                   value={newPlanned}
                   onChange={(e) => setNewPlanned(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                   required
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2.5 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="btn-secondary text-xs"
+                  className="btn-pill-secondary text-xs px-4 py-2"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary text-xs">
+                <button type="submit" className="btn-pill-primary text-xs px-5 py-2">
                   Save Item
                 </button>
               </div>

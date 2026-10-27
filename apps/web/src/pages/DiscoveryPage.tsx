@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 export const DiscoveryPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialType = (searchParams.get('type') as EventType) || 'wedding';
-  const { getIdToken } = useAuth();
+  const { user, getIdToken, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const api = createApiClient(getIdToken);
 
@@ -59,6 +59,12 @@ export const DiscoveryPage: React.FC = () => {
   // Handle Initial Form Submission
   const handleStartDiscovery = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      toast.info('Please sign in or create an account to start planning your celebration.');
+      openAuthModal('signup');
+      return;
+    }
+
     if (!title.trim()) {
       toast.error('Please enter a title for your celebration');
       return;
@@ -178,6 +184,12 @@ export const DiscoveryPage: React.FC = () => {
 
   // Build Full Operational Plan
   const handleBuildPlan = async () => {
+    if (!user) {
+      toast.info('Please sign in or create an account to save your celebration plan.');
+      openAuthModal('signup');
+      return;
+    }
+
     const selectedConcept = concepts.find((c) => c.id === selectedConceptId);
     if (!selectedConcept) {
       toast.error('Please select a celebration concept');
@@ -229,25 +241,26 @@ export const DiscoveryPage: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-8 py-4">
       {/* Step 1: Initial Discovery Form */}
       {step === 'initial' && (
-        <div className="editorial-card p-8 sm:p-10 space-y-6">
-          <div className="space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
-              Guided Discovery
-            </span>
-            <h1 className="font-editorial text-3xl sm:text-4xl font-bold text-evergreen-900">
-              What are you bringing people together for?
+        <div className="glass-card p-8 sm:p-12 space-y-8 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+          <div className="space-y-3">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase">
+              <Sparkles className="w-3.5 h-3.5 text-terra" />
+              <span>Guided Discovery</span>
+            </div>
+            <h1 className="font-serif text-3xl sm:text-5xl font-normal text-bark leading-tight">
+              What are you bringing <span className="italic text-terra">people together</span> for?
             </h1>
-            <p className="text-sm text-ink-muted">
+            <p className="text-sm text-ink-muted max-w-2xl leading-relaxed">
               Start with the basic occasion and your thoughts. Trellis will ask a few high-impact questions to shape your tailored operational plan.
             </p>
           </div>
 
           <form onSubmit={handleStartDiscovery} className="space-y-6 pt-2">
             <div>
-              <label className="block text-xs font-semibold text-ink uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-bark uppercase tracking-wider mb-2.5">
                 Celebration Category
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                 {(['wedding', 'birthday', 'community', 'custom'] as EventType[]).map((type) => {
                   const cap = EVENT_CAPABILITY_REGISTRY[type];
                   const isSelected = eventType === type;
@@ -256,14 +269,14 @@ export const DiscoveryPage: React.FC = () => {
                       type="button"
                       key={type}
                       onClick={() => setEventType(type)}
-                      className={`p-3.5 rounded-xl border text-left transition-all ${
+                      className={`p-4 rounded-2xl border text-left transition-all duration-200 ${
                         isSelected
-                          ? 'border-evergreen-900 bg-evergreen-50/70 text-evergreen-900 ring-2 ring-evergreen-900 font-semibold shadow-xs'
-                          : 'border-warmgray-200 bg-surface text-ink hover:bg-warmgray-100'
+                          ? 'border-bark bg-sand/60 text-bark ring-2 ring-bark/20 font-semibold shadow-sm scale-[1.02]'
+                          : 'border-glass-border/80 bg-white/70 text-ink hover:bg-white hover:border-sand'
                       }`}
                     >
-                      <span className="block text-sm">{cap.label.split(' ')[0]}</span>
-                      <span className="text-[11px] text-ink-muted block mt-0.5 capitalize">
+                      <span className="block text-sm font-medium">{cap.label.split(' ')[0]}</span>
+                      <span className="text-[11px] text-ink-muted block mt-1 capitalize">
                         {type}
                       </span>
                     </button>
@@ -274,7 +287,7 @@ export const DiscoveryPage: React.FC = () => {
 
             {eventType === 'custom' && (
               <div>
-                <label className="block text-xs font-semibold text-ink uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-bark uppercase tracking-wider mb-1.5">
                   Custom Occasion Label
                 </label>
                 <input
@@ -282,13 +295,13 @@ export const DiscoveryPage: React.FC = () => {
                   value={customTypeLabel}
                   onChange={(e) => setCustomTypeLabel(e.target.value)}
                   placeholder="e.g. 50th Anniversary Gala, Family Reunion"
-                  className="w-full px-4 py-2.5 rounded-lg border border-warmgray-200 bg-surface text-sm focus-ring"
+                  className="w-full px-4 py-3 rounded-xl border border-glass-border/80 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra text-bark placeholder:text-ink-subtle"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-ink uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-bark uppercase tracking-wider mb-1.5">
                 Celebration Title
               </label>
               <input
@@ -296,29 +309,29 @@ export const DiscoveryPage: React.FC = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Maya & Liam's Autumn Wedding, Leo's 40th Birthday"
-                className="w-full px-4 py-2.5 rounded-lg border border-warmgray-200 bg-surface text-sm focus-ring"
+                className="w-full px-4 py-3 rounded-xl border border-glass-border/80 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra text-bark placeholder:text-ink-subtle"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-ink uppercase tracking-wider mb-1.5">
-                Initial Vision or Existing Brief <span className="text-ink-muted font-normal">(Optional)</span>
+              <label className="block text-xs font-bold text-bark uppercase tracking-wider mb-1.5">
+                Initial Vision or Existing Brief <span className="text-ink-subtle font-normal lowercase">(optional)</span>
               </label>
               <textarea
                 value={initialNote}
                 onChange={(e) => setInitialNote(e.target.value)}
                 rows={3}
                 placeholder="Describe any thoughts, guest count estimates, preferred atmosphere, dates, or constraints you already have in mind..."
-                className="w-full px-4 py-2.5 rounded-lg border border-warmgray-200 bg-surface text-sm focus-ring"
+                className="w-full px-4 py-3 rounded-xl border border-glass-border/80 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra text-bark placeholder:text-ink-subtle"
               />
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end pt-3">
               <button
                 type="submit"
                 disabled={isLoadingTurn}
-                className="btn-primary px-6 py-3 text-sm flex items-center space-x-2"
+                className="btn-pill-primary px-8 py-3.5 text-sm flex items-center space-x-2"
               >
                 {isLoadingTurn ? (
                   <span>Analyzing brief...</span>
@@ -338,13 +351,13 @@ export const DiscoveryPage: React.FC = () => {
       {step === 'questions' && currentQuestion && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Main Question Column */}
-          <div className="md:col-span-2 editorial-card p-6 sm:p-8 space-y-6">
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-coral-600 flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
+          <div className="md:col-span-2 glass-card p-6 sm:p-10 space-y-6 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-moss inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand">
+                <Sparkles className="w-3.5 h-3.5 text-terra" />
                 <span>Impact Dimension: {currentQuestion.impactDimension}</span>
               </span>
-              <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-evergreen-900 leading-tight">
+              <h2 className="font-serif text-2xl sm:text-4xl text-bark font-normal leading-snug pt-2">
                 {currentQuestion.prompt}
               </h2>
               <p className="text-xs text-ink-muted leading-relaxed">
@@ -353,7 +366,7 @@ export const DiscoveryPage: React.FC = () => {
             </div>
 
             {/* Answer Options */}
-            <div className="space-y-2.5 pt-2">
+            <div className="space-y-3 pt-2">
               {currentQuestion.options.map((opt) => {
                 const isSelected = selectedOptionId === opt.id;
                 return (
@@ -365,22 +378,22 @@ export const DiscoveryPage: React.FC = () => {
                       handleAnswerQuestion(opt.label, opt.isProvisionalAssumption, false);
                     }}
                     disabled={isLoadingTurn}
-                    className={`w-full p-4 rounded-xl border text-left transition-all ${
+                    className={`w-full p-4 rounded-2xl border text-left transition-all duration-200 ${
                       isSelected
-                        ? 'border-evergreen-900 bg-evergreen-50 ring-2 ring-evergreen-900'
-                        : 'border-warmgray-200 bg-surface hover:border-warmgray-300 hover:bg-warmgray-50'
+                        ? 'border-bark bg-sand/60 ring-2 ring-bark/20 shadow-sm'
+                        : 'border-glass-border/80 bg-white/70 hover:border-sand hover:bg-white'
                     }`}
                   >
                     <div className="flex items-start justify-between">
-                      <span className="text-sm font-semibold text-ink">{opt.label}</span>
+                      <span className="text-sm font-semibold text-bark">{opt.label}</span>
                       {opt.isProvisionalAssumption && (
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                           Provisional
                         </span>
                       )}
                     </div>
                     {opt.description && (
-                      <p className="text-xs text-ink-muted mt-0.5">{opt.description}</p>
+                      <p className="text-xs text-ink-muted mt-1 leading-relaxed">{opt.description}</p>
                     )}
                   </button>
                 );
@@ -388,11 +401,11 @@ export const DiscoveryPage: React.FC = () => {
             </div>
 
             {/* Custom or Skip Actions */}
-            <div className="pt-4 border-t border-warmgray-100 flex items-center justify-between text-xs">
+            <div className="pt-4 border-t border-glass-border/80 flex items-center justify-between text-xs">
               <button
                 type="button"
                 onClick={() => handleAnswerQuestion(undefined, false, true)}
-                className="text-ink-muted hover:text-ink underline focus-ring"
+                className="text-ink-muted hover:text-terra underline"
                 disabled={isLoadingTurn}
               >
                 Skip for now
@@ -403,10 +416,10 @@ export const DiscoveryPage: React.FC = () => {
                 onClick={() =>
                   handleAnswerQuestion('Not sure yet (use sensible default)', true, false)
                 }
-                className="btn-secondary text-xs py-1.5 px-3"
+                className="btn-pill-secondary text-xs py-2 px-4"
                 disabled={isLoadingTurn}
               >
-                <HelpCircle className="w-3.5 h-3.5 mr-1 text-ink-muted" />
+                <HelpCircle className="w-3.5 h-3.5 mr-1.5 text-ink-muted" />
                 <span>Not sure / Suggest default</span>
               </button>
             </div>
@@ -414,9 +427,9 @@ export const DiscoveryPage: React.FC = () => {
 
           {/* Persistent "What Trellis Knows" Side Panel */}
           <div className="space-y-4">
-            <div className="editorial-card p-5 space-y-4">
-              <h3 className="font-editorial text-base font-bold text-evergreen-900 flex items-center space-x-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="glass-card p-6 space-y-4 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+              <h3 className="font-serif text-lg font-normal text-bark flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 text-moss" />
                 <span>What Trellis Knows</span>
               </h3>
 
@@ -426,16 +439,16 @@ export const DiscoveryPage: React.FC = () => {
                 <ul className="space-y-2 text-xs text-ink">
                   {whatTrellisKnows.map((k, idx) => (
                     <li key={idx} className="flex items-start space-x-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                      <span>{k}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-moss mt-1.5 shrink-0" />
+                      <span className="leading-relaxed">{k}</span>
                     </li>
                   ))}
                 </ul>
               )}
 
               {assumptions.length > 0 && (
-                <div className="pt-3 border-t border-warmgray-200">
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-1.5 flex items-center space-x-1">
+                <div className="pt-4 border-t border-glass-border/80">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-amber-800 mb-2 flex items-center space-x-1.5">
                     <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
                     <span>Active Assumptions</span>
                   </h4>
@@ -443,7 +456,7 @@ export const DiscoveryPage: React.FC = () => {
                     {assumptions.map((a, idx) => (
                       <li key={idx} className="flex items-start space-x-1.5">
                         <span className="text-amber-600 font-bold">•</span>
-                        <span>{a}</span>
+                        <span className="leading-relaxed">{a}</span>
                       </li>
                     ))}
                   </ul>
@@ -456,13 +469,14 @@ export const DiscoveryPage: React.FC = () => {
 
       {/* Step 3: Concept Studio */}
       {step === 'concepts' && (
-        <div className="space-y-6">
-          <div className="space-y-1 text-center max-w-2xl mx-auto">
-            <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
-              Concept Studio
-            </span>
-            <h2 className="font-editorial text-3xl font-bold text-evergreen-900">
-              Personalized Celebration Directions
+        <div className="space-y-8">
+          <div className="space-y-2 text-center max-w-2xl mx-auto">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase">
+              <Sparkles className="w-3.5 h-3.5 text-terra" />
+              <span>Concept Studio</span>
+            </div>
+            <h2 className="font-serif text-3xl sm:text-5xl font-normal text-bark">
+              Personalized <span className="italic text-terra">Celebration</span> Directions
             </h2>
             <p className="text-sm text-ink-muted">
               Based on your stated preferences, Trellis synthesized distinct concepts differing in effort, atmosphere, and spending priorities.
@@ -478,23 +492,23 @@ export const DiscoveryPage: React.FC = () => {
                 <div
                   key={concept.id}
                   onClick={() => setSelectedConceptId(concept.id)}
-                  className={`editorial-card cursor-pointer transition-all flex flex-col justify-between ${
+                  className={`glass-card p-7 rounded-3xl border cursor-pointer transition-all duration-300 flex flex-col justify-between ${
                     isSelected
-                      ? 'border-evergreen-900 ring-2 ring-evergreen-900 shadow-warm-lg bg-surface'
-                      : 'hover:border-warmgray-300 hover:shadow-warm'
+                      ? 'border-bark ring-2 ring-bark/20 shadow-card-hover bg-white/90 scale-[1.01]'
+                      : 'border-glass-border/80 hover:border-sand hover:shadow-card-float bg-white/70'
                   }`}
                 >
                   <div className="space-y-4">
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div>
-                        <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-evergreen-50 text-evergreen-800 border border-evergreen-100">
+                        <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-moss/10 text-moss border border-moss/20">
                           Effort: {concept.effortLevel}
                         </span>
-                        <h3 className="font-editorial text-xl font-bold text-evergreen-900 mt-2">
+                        <h3 className="font-serif text-2xl font-normal text-bark mt-2">
                           {concept.title}
                         </h3>
-                        <p className="text-xs text-ink-muted italic mt-0.5">
+                        <p className="text-xs text-terra italic mt-0.5">
                           {concept.tagline}
                         </p>
                       </div>
@@ -502,7 +516,7 @@ export const DiscoveryPage: React.FC = () => {
                         type="radio"
                         checked={isSelected}
                         onChange={() => setSelectedConceptId(concept.id)}
-                        className="w-5 h-5 text-evergreen-900 focus:ring-evergreen-700"
+                        className="w-5 h-5 text-bark accent-bark focus:ring-bark"
                       />
                     </div>
 
@@ -511,14 +525,14 @@ export const DiscoveryPage: React.FC = () => {
                     </p>
 
                     {/* Why It Fits */}
-                    <div className="p-3 bg-paper rounded-lg border border-warmgray-200 space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-evergreen-800 block">
+                    <div className="p-3.5 bg-sand/30 rounded-2xl border border-sand/50 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-moss block">
                         Why this fits your brief
                       </span>
                       <ul className="space-y-1 text-xs text-ink-muted">
                         {concept.whyItFits.map((fit, idx) => (
                           <li key={idx} className="flex items-start space-x-1.5">
-                            <span className="text-emerald-600 font-bold">✓</span>
+                            <span className="text-moss font-bold">✓</span>
                             <span>{fit}</span>
                           </li>
                         ))}
@@ -527,14 +541,14 @@ export const DiscoveryPage: React.FC = () => {
 
                     {/* Highlights */}
                     <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-ink block mb-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-bark block mb-2">
                         Key Experience Highlights
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {concept.highlights.map((h, idx) => (
                           <span
                             key={idx}
-                            className="text-xs px-2.5 py-1 rounded-md bg-warmgray-100 text-ink border border-warmgray-200"
+                            className="text-xs px-3 py-1 rounded-full bg-sand/40 text-bark border border-sand/60"
                           >
                             {h}
                           </span>
@@ -544,20 +558,20 @@ export const DiscoveryPage: React.FC = () => {
                   </div>
 
                   {/* Financial & Tradeoff Footer */}
-                  <div className="pt-4 mt-6 border-t border-warmgray-100 flex items-center justify-between text-xs">
+                  <div className="pt-4 mt-6 border-t border-glass-border/80 flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-ink-muted block">
+                      <span className="text-[10px] uppercase font-bold text-ink-subtle block">
                         Est. Budget ({concept.costBasis})
                       </span>
-                      <span className="font-editorial text-lg font-bold text-evergreen-900">
+                      <span className="font-serif text-xl font-normal text-bark">
                         ${formattedBudget}
                       </span>
                     </div>
 
                     <button
                       type="button"
-                      className={`btn-primary text-xs py-2 px-3 ${
-                        isSelected ? 'bg-evergreen-900' : 'bg-warmgray-200 text-ink hover:bg-warmgray-300'
+                      className={`text-xs py-2 px-4 rounded-full font-medium transition-all ${
+                        isSelected ? 'bg-bark text-cream' : 'bg-sand/60 text-bark hover:bg-sand'
                       }`}
                     >
                       {isSelected ? 'Selected Direction' : 'Choose Concept'}
@@ -569,10 +583,10 @@ export const DiscoveryPage: React.FC = () => {
           </div>
 
           {/* Action Bar */}
-          <div className="pt-6 border-t border-warmgray-200 flex items-center justify-between">
+          <div className="pt-6 border-t border-glass-border/80 flex items-center justify-between">
             <button
               onClick={() => setStep('questions')}
-              className="btn-secondary text-xs flex items-center space-x-1"
+              className="btn-pill-secondary text-xs flex items-center space-x-1"
             >
               <ArrowLeft className="w-3.5 h-3.5 mr-1" />
               <span>Back to Discovery</span>
@@ -580,7 +594,7 @@ export const DiscoveryPage: React.FC = () => {
 
             <button
               onClick={handleBuildPlan}
-              className="btn-accent px-6 py-3 text-sm font-semibold flex items-center space-x-2"
+              className="btn-pill-terra px-8 py-3.5 text-sm font-semibold flex items-center space-x-2"
             >
               <span>Build Operational Workspace</span>
               <ArrowRight className="w-4 h-4 ml-1" />
@@ -591,14 +605,14 @@ export const DiscoveryPage: React.FC = () => {
 
       {/* Step 4: Loading Workspace Synthesis */}
       {step === 'building' && (
-        <div className="editorial-card text-center py-20 px-6 space-y-4 max-w-lg mx-auto">
-          <div className="w-12 h-12 rounded-full bg-evergreen-50 text-evergreen-900 border border-evergreen-200 flex items-center justify-center mx-auto animate-spin">
-            <Sparkles className="w-6 h-6 text-coral-500" />
+        <div className="glass-card text-center py-20 px-8 space-y-4 max-w-lg mx-auto rounded-3xl border border-glass-border/70 backdrop-blur-md">
+          <div className="w-14 h-14 rounded-full bg-sand/60 text-bark border border-sand flex items-center justify-center mx-auto animate-spin">
+            <Sparkles className="w-6 h-6 text-terra" />
           </div>
-          <h2 className="font-editorial text-2xl font-bold text-evergreen-900">
-            Crafting Your Operational Workspace...
+          <h2 className="font-serif text-3xl font-normal text-bark">
+            Crafting Your <span className="italic text-terra">Operational Workspace</span>...
           </h2>
-          <p className="text-xs text-ink-muted leading-relaxed">
+          <p className="text-xs text-ink-muted leading-relaxed max-w-sm mx-auto">
             Generating verified checklist tasks, minor-unit budget categories, vendor requirements pipeline, and personalized details linked to your chosen concept.
           </p>
         </div>

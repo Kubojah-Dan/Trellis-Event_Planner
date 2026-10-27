@@ -36,8 +36,8 @@ export const EventOverviewPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="editorial-card text-center py-20">
-        <div className="inline-block w-8 h-8 border-2 border-evergreen-900 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="glass-card text-center py-20">
+        <div className="inline-block w-8 h-8 border-2 border-bark border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-ink-muted">Loading celebration workspace...</p>
       </div>
     );
@@ -45,11 +45,11 @@ export const EventOverviewPage: React.FC = () => {
 
   if (error || !aggregate) {
     return (
-      <div className="editorial-card bg-coral-50 border-coral-200 text-center py-12">
-        <AlertTriangle className="w-8 h-8 text-coral-600 mx-auto mb-2" />
-        <h3 className="font-editorial text-lg font-bold text-coral-800">Workspace Unavailable</h3>
+      <div className="glass-card bg-terra/10 border-terra/30 text-center py-12">
+        <AlertTriangle className="w-8 h-8 text-terra mx-auto mb-2" />
+        <h3 className="font-serif text-xl text-bark">Workspace Unavailable</h3>
         <p className="text-xs text-ink-muted mt-1">{(error as any)?.message || 'Failed to load event data.'}</p>
-        <button onClick={() => navigate('/')} className="btn-secondary mt-4 text-xs">
+        <button onClick={() => navigate('/')} className="btn-pill-secondary mt-4 text-xs">
           Return to Dashboard
         </button>
       </div>
@@ -76,38 +76,38 @@ export const EventOverviewPage: React.FC = () => {
   const selectedIdea = ideas.find((i) => i.selected);
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-8 max-w-6xl mx-auto pb-16">
       {/* Editorial Event Identity Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-evergreen-900 to-evergreen-950 text-white p-6 sm:p-8 shadow-warm-lg">
+      <div className="relative overflow-hidden rounded-[28px] bg-bark text-cream p-7 sm:p-10 shadow-card-hover">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/10 text-coral-100 border border-white/10">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] px-3 py-1 rounded-full bg-white/10 text-cream border border-white/10">
                 {cap.label}
               </span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/30">
+              <span className="text-xs font-semibold px-3 py-0.5 rounded-full bg-moss/40 text-cream border border-moss/50">
                 Version {event.currentVersion}
               </span>
             </div>
 
-            <h1 className="font-editorial text-2xl sm:text-4xl font-bold tracking-tight text-white">
+            <h1 className="font-serif text-3xl sm:text-5xl font-normal text-cream tracking-tight">
               {event.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs text-evergreen-100/80 pt-1">
+            <div className="flex flex-wrap items-center gap-5 text-xs text-cream/70 pt-1">
               <div className="flex items-center space-x-1.5">
-                <Clock className="w-3.5 h-3.5 text-coral-400" />
-                <span>{countdown ? countdown.formattedCountdown : 'Date to be confirmed'}</span>
+                <Clock className="w-3.5 h-3.5 text-terra" />
+                <span>{countdown ? countdown.formattedCountdown : 'Date flexible'}</span>
               </div>
               {event.location?.city && (
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-coral-400">•</span>
+                  <span className="text-terra">•</span>
                   <span>{event.location.city}</span>
                 </div>
               )}
               {event.brief.guestCount?.target && (
                 <div className="flex items-center space-x-1.5">
-                  <Users className="w-3.5 h-3.5 text-coral-400" />
+                  <Users className="w-3.5 h-3.5 text-terra" />
                   <span>~{event.brief.guestCount.target} guests</span>
                 </div>
               )}
@@ -117,47 +117,50 @@ export const EventOverviewPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(`/events/${eventId}/revisions`)}
-              className="btn-accent text-xs px-4 py-2.5 flex items-center space-x-2"
+              className="btn-pill-terra text-xs px-5 py-3 flex items-center space-x-2"
             >
               <Sparkles className="w-4 h-4" />
               <span>Request Plan Revision</span>
             </button>
           </div>
         </div>
+
+        {/* Ambient background glow */}
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-terra/20 blur-3xl pointer-events-none" />
       </div>
 
       {/* Primary KPI & Health Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Budget Health Card */}
-        <div className="editorial-card space-y-4">
+        <div className="glass-card space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center space-x-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-evergreen-800" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-moss flex items-center space-x-1.5">
+              <DollarSign className="w-3.5 h-3.5" />
               <span>Budget Ledger</span>
             </span>
             <button
               onClick={() => navigate(`/events/${eventId}/budget`)}
-              className="text-xs font-semibold text-evergreen-800 hover:text-evergreen-900"
+              className="text-xs font-bold text-bark hover:text-terra transition-colors"
             >
               View Ledger →
             </button>
           </div>
 
           <div>
-            <span className="text-2xl font-editorial font-bold text-ink block">
+            <span className="text-3xl font-serif text-bark block">
               {formatMoney(budgetSummary.forecastTotalMinorUnits, currency)}
             </span>
             <span className="text-xs text-ink-muted">
-              Authoritative forecast of {formatMoney(budgetSummary.targetBudgetMinorUnits, currency)} target
+              Forecast of {formatMoney(budgetSummary.targetBudgetMinorUnits, currency)} ceiling
             </span>
           </div>
 
           {/* Variance status */}
           <div
-            className={`p-3 rounded-lg text-xs flex items-center justify-between ${
+            className={`p-3 rounded-2xl text-xs flex items-center justify-between border ${
               budgetSummary.isOverBudget
-                ? 'bg-coral-50 text-coral-800 border border-coral-200 font-medium'
-                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                ? 'bg-terra/10 text-terra border-terra/30 font-medium'
+                : 'bg-moss/10 text-moss border-moss/20 font-medium'
             }`}
           >
             <span>{budgetSummary.isOverBudget ? 'Over Budget Variance' : 'Remaining Contingency'}</span>
@@ -168,66 +171,66 @@ export const EventOverviewPage: React.FC = () => {
         </div>
 
         {/* Checklist & Tasks Progress */}
-        <div className="editorial-card space-y-4">
+        <div className="glass-card space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center space-x-1.5">
-              <CheckSquare className="w-3.5 h-3.5 text-evergreen-800" />
-              <span>Operational Checklist</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-moss flex items-center space-x-1.5">
+              <CheckSquare className="w-3.5 h-3.5" />
+              <span>Checklist Progress</span>
             </span>
             <button
               onClick={() => navigate(`/events/${eventId}/tasks`)}
-              className="text-xs font-semibold text-evergreen-800 hover:text-evergreen-900"
+              className="text-xs font-bold text-bark hover:text-terra transition-colors"
             >
               All Tasks →
             </button>
           </div>
 
           <div>
-            <div className="flex items-baseline justify-between mb-1">
-              <span className="font-editorial text-2xl font-bold text-ink">
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="font-serif text-3xl text-bark">
                 {percentComplete}%
               </span>
               <span className="text-xs text-ink-muted">
                 {completedTasks} of {totalTasks} completed
               </span>
             </div>
-            <div className="w-full bg-warmgray-200 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-sand/60 h-2.5 rounded-full overflow-hidden">
               <div
-                className="bg-evergreen-800 h-full rounded-full transition-all duration-300"
+                className="bg-bark h-full rounded-full transition-all duration-300"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2 bg-paper rounded border border-warmgray-200">
-              <span className="text-ink-muted block text-[10px] uppercase font-bold">Ready to Do</span>
-              <span className="font-bold text-ink">{actionableTasks.length} actionable</span>
+            <div className="p-2.5 bg-white/70 rounded-xl border border-bark/8">
+              <span className="text-ink-muted block text-[10px] uppercase font-bold tracking-wider">Ready to Do</span>
+              <span className="font-bold text-bark">{actionableTasks.length} actionable</span>
             </div>
-            <div className="p-2 bg-paper rounded border border-warmgray-200">
-              <span className="text-ink-muted block text-[10px] uppercase font-bold">Blocked</span>
-              <span className="font-bold text-amber-700">{blockedTasks.length} dependencies</span>
+            <div className="p-2.5 bg-white/70 rounded-xl border border-bark/8">
+              <span className="text-ink-muted block text-[10px] uppercase font-bold tracking-wider">Blocked</span>
+              <span className="font-bold text-terra">{blockedTasks.length} dependencies</span>
             </div>
           </div>
         </div>
 
         {/* Vendors Pipeline Card */}
-        <div className="editorial-card space-y-4">
+        <div className="glass-card space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-ink-muted flex items-center space-x-1.5">
-              <Layers className="w-3.5 h-3.5 text-evergreen-800" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-moss flex items-center space-x-1.5">
+              <Layers className="w-3.5 h-3.5" />
               <span>Vendor Pipeline</span>
             </span>
             <button
               onClick={() => navigate(`/events/${eventId}/vendors`)}
-              className="text-xs font-semibold text-evergreen-800 hover:text-evergreen-900"
+              className="text-xs font-bold text-bark hover:text-terra transition-colors"
             >
-              Vendor Pipeline →
+              Pipeline →
             </button>
           </div>
 
           <div>
-            <span className="text-2xl font-editorial font-bold text-ink block">
+            <span className="text-3xl font-serif text-bark block">
               {vendors.length} Categories
             </span>
             <span className="text-xs text-ink-muted">
@@ -236,76 +239,95 @@ export const EventOverviewPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="p-3 bg-paper rounded-lg border border-warmgray-200 text-xs text-ink-muted leading-relaxed">
-            All categories derived from celebration concept. Record candidate quotes without fictional placeholders.
+          <div className="p-3 bg-white/70 rounded-xl border border-bark/8 text-xs text-ink-muted leading-relaxed">
+            Derived directly from celebration concept. Track candidate quotes without fake placeholders.
           </div>
         </div>
       </div>
 
       {/* Immediate Next Actions List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="editorial-card space-y-4">
-          <div className="flex items-center justify-between border-b border-warmgray-100 pb-3">
-            <h3 className="font-editorial text-lg font-bold text-evergreen-900">
+        <div className="glass-card space-y-4">
+          <div className="flex items-center justify-between border-b border-bark/8 pb-3">
+            <h3 className="font-serif text-2xl text-bark">
               Upcoming Actionable Tasks
             </h3>
-            <span className="text-xs text-ink-muted">{actionableTasks.length} unblocked</span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-moss/10 text-moss">
+              {actionableTasks.length} unblocked
+            </span>
           </div>
 
           {actionableTasks.length === 0 ? (
-            <p className="text-xs text-ink-muted py-4">No tasks are currently waiting on action.</p>
+            <div className="text-center py-8 text-xs text-ink-muted">
+              No tasks currently ready to execute. Check timeline or completed tasks.
+            </div>
           ) : (
             <div className="space-y-2.5">
-              {actionableTasks.slice(0, 4).map((task) => (
+              {actionableTasks.slice(0, 5).map((task) => (
                 <div
                   key={task.id}
-                  className="p-3 rounded-lg border border-warmgray-200 hover:border-evergreen-700 bg-surface flex items-start justify-between text-xs"
+                  onClick={() => navigate(`/events/${eventId}/tasks`)}
+                  className="p-3 rounded-2xl bg-white/70 border border-bark/8 hover:border-bark/20 cursor-pointer flex items-center justify-between text-xs transition-colors"
                 >
-                  <div className="space-y-0.5">
-                    <span className="font-semibold text-ink block">{task.title}</span>
-                    <span className="text-ink-muted block text-[11px]">{task.purpose}</span>
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-4 h-4 rounded-full border border-bark/30 flex items-center justify-center shrink-0" />
+                    <div>
+                      <span className="font-semibold text-bark block">{task.title}</span>
+                      {task.purpose && <span className="text-ink-muted text-[11px]">{task.purpose}</span>}
+                    </div>
                   </div>
-                  {task.locked && <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0 ml-2" />}
+                  {task.locked && <Lock className="w-3.5 h-3.5 text-terra shrink-0" />}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Personalized Concept & Creative Direction */}
-        <div className="editorial-card space-y-4">
-          <div className="flex items-center justify-between border-b border-warmgray-100 pb-3">
-            <h3 className="font-editorial text-lg font-bold text-evergreen-900 flex items-center space-x-1.5">
-              <Sparkles className="w-4 h-4 text-coral-500" />
-              <span>Concept & Atmosphere</span>
+        {/* Concept / Creative Direction */}
+        <div className="glass-card space-y-4">
+          <div className="flex items-center justify-between border-b border-bark/8 pb-3">
+            <h3 className="font-serif text-2xl text-bark">
+              Celebration Concept
             </h3>
             <button
-              onClick={() => navigate(`/events/${eventId}/ideas`)}
-              className="text-xs font-semibold text-evergreen-800"
+              onClick={() => navigate(`/events/${eventId}/concepts`)}
+              className="text-xs font-bold text-bark hover:text-terra"
             >
-              All Ideas →
+              Concept Studio →
             </button>
           </div>
 
           {selectedIdea ? (
-            <div className="space-y-3 text-xs">
-              <span className="font-bold text-sm text-ink block">{selectedIdea.title}</span>
-              <p className="text-ink-muted leading-relaxed">{selectedIdea.description}</p>
-              {selectedIdea.fitReasons && selectedIdea.fitReasons.length > 0 && (
-                <div className="p-3 bg-paper rounded-lg border border-warmgray-200 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-evergreen-800 block">
-                    Grounded Fit
+            <div className="space-y-3">
+              <span className="inline-block px-2.5 py-0.5 rounded-full bg-terra/10 text-terra text-[11px] font-bold uppercase tracking-wider">
+                Active Concept Direction
+              </span>
+              <h4 className="font-serif text-2xl text-bark">{selectedIdea.title}</h4>
+              <p className="text-xs text-ink-muted leading-relaxed">{selectedIdea.description}</p>
+              {selectedIdea.fitReasons?.length > 0 && (
+                <div className="pt-2 border-t border-bark/8">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-moss block mb-1">
+                    Why it fits your celebration
                   </span>
-                  {selectedIdea.fitReasons.map((r, i) => (
-                    <span key={i} className="text-ink-muted block">• {r}</span>
-                  ))}
+                  <ul className="text-xs text-ink-muted space-y-1 list-disc list-inside">
+                    {selectedIdea.fitReasons.map((reason, i) => (
+                      <li key={i}>{reason}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-xs text-ink-muted py-4">
-              Explore customized creative ideas and details in the Ideas section.
-            </p>
+            <div className="text-center py-8 text-xs text-ink-muted space-y-3">
+              <Sparkles className="w-6 h-6 text-terra mx-auto opacity-70" />
+              <p>Explore curated celebration concepts tailored to your brief.</p>
+              <button
+                onClick={() => navigate(`/events/${eventId}/concepts`)}
+                className="btn-pill-primary text-xs py-2 px-4"
+              >
+                Open Concept Studio
+              </button>
+            </div>
           )}
         </div>
       </div>

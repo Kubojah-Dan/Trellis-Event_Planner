@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Sparkles, Calendar, ChevronDown, LogOut, User, Plus, RefreshCw } from 'lucide-react';
+import { ChevronDown, LogOut, User, Plus, Calendar } from 'lucide-react';
 
 interface NavbarProps {
   currentEventTitle?: string;
@@ -9,163 +9,153 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentEventTitle, syncStatus = 'synced' }) => {
-  const { user, signOut, switchDemoUser, signInWithGoogle } = useAuth();
+  const { user, signOut, openAuthModal } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-warmgray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand / Logo */}
-        <div className="flex items-center space-x-6">
-          <Link to="/" className="flex items-center space-x-2.5 group">
-            <div className="w-9 h-9 rounded-lg bg-evergreen-900 flex items-center justify-center text-white shadow-sm group-hover:bg-evergreen-800 transition-colors">
-              <Sparkles className="w-5 h-5 text-coral-500" />
-            </div>
-            <div>
-              <span className="font-editorial text-xl font-bold text-evergreen-900 tracking-tight">
-                Trellis
-              </span>
-              <span className="hidden sm:inline-block ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-evergreen-50 text-evergreen-800 border border-evergreen-100">
-                Celebration Studio
-              </span>
-            </div>
-          </Link>
+    <nav className="relative z-30 w-full px-6 sm:px-10 py-5 grid grid-cols-[auto_1fr_auto] items-center text-sm border-b border-bark/8 bg-cream/80 backdrop-blur-md">
+      {/* Brand Logo matching template design */}
+      <div className="flex items-center space-x-6">
+        <Link to="/" className="flex items-center gap-2.5 font-serif text-2xl tracking-wide text-bark group">
+          <img
+            src="/assets/img/logo.png"
+            alt="Trellis"
+            className="w-8 h-8 object-contain transition-transform group-hover:scale-105"
+          />
+          <span className="font-serif">
+            T<em className="text-terra italic font-serif">rellis</em>
+          </span>
+        </Link>
 
-          {/* Active Event Indicator */}
-          {currentEventTitle && (
-            <div className="hidden md:flex items-center space-x-2 border-l border-warmgray-200 pl-6">
-              <Calendar className="w-4 h-4 text-ink-muted" />
-              <span className="text-sm font-semibold text-ink truncate max-w-[220px]">
-                {currentEventTitle}
-              </span>
-            </div>
-          )}
+        {/* Active Celebration Badge */}
+        {currentEventTitle && (
+          <div className="hidden lg:flex items-center gap-2 pl-6 border-l border-bark/10 text-xs font-medium text-ink-muted">
+            <Calendar className="w-3.5 h-3.5 text-moss" />
+            <span className="text-ink font-semibold truncate max-w-[200px]">{currentEventTitle}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Centered Editorial Navigation Links */}
+      <ul className="hidden md:flex gap-8 justify-self-center list-none text-[15px] font-medium text-bark">
+        <li>
+          <Link to="/" className="hover:text-terra transition-colors">
+            Overview
+          </Link>
+        </li>
+        <li>
+          <Link to="/events/new" className="hover:text-terra transition-colors">
+            Discovery
+          </Link>
+        </li>
+        <li>
+          <a href="#how-it-works" className="hover:text-terra transition-colors">
+            How It Works
+          </a>
+        </li>
+        <li>
+          <a href="#guarantees" className="hover:text-terra transition-colors">
+            Guarantees
+          </a>
+        </li>
+      </ul>
+
+      {/* Right Action Bar */}
+      <div className="flex items-center gap-3 justify-self-end">
+        {/* Pulsing Sync Status Pill */}
+        <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-bark/10 text-xs font-medium text-bark">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              syncStatus === 'synced'
+                ? 'bg-moss animate-pulse-ring'
+                : syncStatus === 'syncing'
+                ? 'bg-terra animate-pulse'
+                : 'bg-bark/40'
+            }`}
+          />
+          <span className="capitalize">{syncStatus}</span>
         </div>
 
-        {/* Right Action Bar */}
-        <div className="flex items-center space-x-4">
-          {/* Sync indicator */}
-          <div className="hidden sm:flex items-center space-x-1.5 text-xs text-ink-muted bg-paper px-2.5 py-1 rounded-md border border-warmgray-200">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                syncStatus === 'synced'
-                  ? 'bg-emerald-500'
-                  : syncStatus === 'syncing'
-                  ? 'bg-amber-500 animate-pulse'
-                  : 'bg-warmgray-400'
-              }`}
-            />
-            <span className="capitalize">{syncStatus}</span>
-          </div>
+        {/* New Celebration Pill CTA */}
+        <button
+          id="btn-new-celebration"
+          onClick={() => navigate('/events/new')}
+          className="btn-pill-primary text-xs py-2 px-4 sm:px-5"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">New Celebration</span>
+          <span className="sm:hidden">New</span>
+        </button>
 
-          {/* New Event Button */}
-          <button
-            onClick={() => navigate('/events/new')}
-            className="btn-primary text-xs py-2 px-3 sm:px-4"
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            <span className="hidden sm:inline">New Celebration</span>
-            <span className="sm:hidden">New</span>
-          </button>
-
-          {/* User Profile & Demo Switcher */}
+        {/* User Account / Authentication Buttons */}
+        {user ? (
           <div className="relative">
             <button
+              id="btn-user-menu"
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-1.5 rounded-lg border border-warmgray-200 bg-surface hover:bg-warmgray-100 transition-colors focus-ring"
+              className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full border border-bark/10 bg-white/70 backdrop-blur-md hover:bg-white transition-all text-xs font-medium text-bark"
               aria-label="User Account Menu"
             >
-              <div className="w-7 h-7 rounded-full bg-evergreen-100 text-evergreen-800 flex items-center justify-center font-bold text-xs">
-                {user?.displayName ? user.displayName.charAt(0) : <User className="w-4 h-4" />}
-              </div>
-              <span className="hidden sm:inline text-xs font-medium text-ink max-w-[100px] truncate">
-                {user?.displayName || 'Sign in'}
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || 'User'}
+                  className="w-6 h-6 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-moss/20 text-moss flex items-center justify-center font-bold text-xs">
+                  {user.displayName ? user.displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+                </div>
+              )}
+              <span className="hidden sm:inline max-w-[100px] truncate">
+                {user.displayName || user.email?.split('@')[0] || 'My Account'}
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-ink-muted" />
+              <ChevronDown className="w-3 h-3 text-ink-subtle" />
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-surface rounded-xl shadow-warm-lg border border-warmgray-200 py-2 z-50 text-xs">
-                <div className="px-4 py-2 border-b border-warmgray-200">
-                  <p className="font-semibold text-ink">{user?.displayName || 'Guest'}</p>
-                  <p className="text-ink-muted truncate">{user?.email || 'No email associated'}</p>
-                  {user?.isDemoUser && (
-                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
-                      Local Development Profile
-                    </span>
-                  )}
+              <div className="absolute right-0 mt-2 w-64 bg-cream/95 backdrop-blur-xl rounded-2xl shadow-card-float border border-bark/10 py-3 z-50 text-xs animate-scale-in">
+                <div className="px-4 py-2 border-b border-bark/10">
+                  <p className="font-bold text-ink truncate">{user.displayName || 'Celebration Host'}</p>
+                  <p className="text-ink-subtle truncate text-[11px]">{user.email || 'Signed in'}</p>
                 </div>
 
-                {/* Local Demo Account Switcher */}
-                <div className="px-4 py-2 border-b border-warmgray-200 bg-paper/50">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-1.5">
-                    Switch Test Account (ACL Isolation)
-                  </p>
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => {
-                        switchDemoUser('user-maya', 'Maya Lin (Organizer)', 'maya@example.com');
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full text-left px-2 py-1 rounded hover:bg-surface text-ink flex items-center justify-between"
-                    >
-                      <span>Maya Lin (Organizer)</span>
-                      {user?.uid === 'user-maya' && <span className="text-emerald-600 font-bold">✓</span>}
-                    </button>
-                    <button
-                      onClick={() => {
-                        switchDemoUser('user-leo', 'Leo Rivera (Co-host)', 'leo@example.com');
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full text-left px-2 py-1 rounded hover:bg-surface text-ink flex items-center justify-between"
-                    >
-                      <span>Leo Rivera (Co-host)</span>
-                      {user?.uid === 'user-leo' && <span className="text-emerald-600 font-bold">✓</span>}
-                    </button>
-                    <button
-                      onClick={() => {
-                        switchDemoUser('user-alex', 'Alex Chen (Guest)', 'alex@example.com');
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full text-left px-2 py-1 rounded hover:bg-surface text-ink flex items-center justify-between"
-                    >
-                      <span>Alex Chen (Guest)</span>
-                      {user?.uid === 'user-alex' && <span className="text-emerald-600 font-bold">✓</span>}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="px-2 pt-1">
-                  {!user?.isDemoUser && user ? (
-                    <button
-                      onClick={() => {
-                        signOut();
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-coral-600 hover:bg-coral-50 flex items-center space-x-2"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>Sign out</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        signInWithGoogle().catch(() => {});
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-evergreen-800 hover:bg-evergreen-50 flex items-center space-x-2"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Sign in with Google</span>
-                    </button>
-                  )}
+                <div className="px-2 pt-2">
+                  <button
+                    id="btn-sign-out"
+                    onClick={() => {
+                      signOut();
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-terra hover:bg-terra/10 flex items-center space-x-2 font-medium transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
               </div>
             )}
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              id="btn-sign-in"
+              onClick={() => openAuthModal('login')}
+              className="px-3.5 py-2 rounded-full border border-bark/12 bg-white/70 backdrop-blur-md hover:bg-white text-xs font-semibold text-bark transition-all"
+            >
+              Sign In
+            </button>
+            <button
+              id="btn-sign-up"
+              onClick={() => openAuthModal('signup')}
+              className="hidden sm:inline-flex px-3.5 py-2 rounded-full bg-moss hover:bg-moss/90 text-cream text-xs font-semibold shadow-sm transition-all"
+            >
+              Sign Up
+            </button>
+          </div>
+        )}
       </div>
-    </header>
+    </nav>
   );
 };

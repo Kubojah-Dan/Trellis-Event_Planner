@@ -4,6 +4,10 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendPasswordResetEmail,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { auth } from '../infrastructure/firebase';
@@ -16,27 +20,32 @@ export interface UserProfile {
   isDemoUser?: boolean;
 }
 
+export type AuthModalMode = 'login' | 'signup' | 'forgot';
+
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   getIdToken: () => Promise<string | null>;
+  // Auth modal management
+  isAuthModalOpen: boolean;
+  authModalMode: AuthModalMode;
+  openAuthModal: (mode?: AuthModalMode) => void;
+  closeAuthModal: () => void;
+  // Optional local testing switcher
   switchDemoUser: (uid: string, name: string, email: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEMO_ACCOUNTS = [
-  { uid: 'user-maya', name: 'Maya Lin', email: 'maya@example.com' },
-  { uid: 'user-leo', name: 'Leo Rivera', email: 'leo@example.com' },
-  { uid: 'user-alex', name: 'Alex Chen', email: 'alex@example.com' },
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [demoUser, setDemoUser] = useState<UserProfile | null>(() => {
-    // Default to the first demo account if offline/in development
+    // Only load saved demo user if explicitly stored in local storage
     const saved = localStorage.getItem('trellis_demo_user');
     if (saved) {
       try {
@@ -45,15 +54,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
     }
-    return {
-      uid: DEMO_ACCOUNTS[0]!.uid,
-      displayName: DEMO_ACCOUNTS[0]!.name,
-      email: DEMO_ACCOUNTS[0]!.email,
-      photoURL: null,
-      isDemoUser: true,
-    };
+    return null;
   });
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Auth modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<AuthModalMode>('login');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -84,9 +91,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
+      setIsAuthModalOpen(false);
     } catch (err: any) {
       console.warn('Google sign-in popup failed or was cancelled:', err);
+      throw err;
+    }
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      setIsAuthModalOpen(false);
+    } catch (err: any) {
+      console.warn('Email sign-in failed:', err);
+      throw err;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string, displayName: string) => {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      if (cred.user && displayName.trim()) {
+        await updateProfile(cred.user, {
+          displayName: displayName.trim(),
+        });
+        // Force state update to reflect new display name
+        setFirebaseUser({ ...cred.user, displayName: displayName.trim() } as FirebaseUser);
+      }
+      setIsAuthModalOpen(false);
+    } catch (err: any) {
+      console.warn('Email sign-up failed:', err);
+      throw err;
+    }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (err: any) {
+      console.warn('Password reset failed:', err);
       throw err;
     }
   };
@@ -97,6 +142,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setDemoUser(null);
     localStorage.removeItem('trellis_demo_user');
+  };
+
+  const openAuthModal = (mode: AuthModalMode = 'login') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
   };
 
   const switchDemoUser = (uid: string, name: string, email: string) => {
@@ -127,8 +181,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user: activeUser,
         loading,
         signInWithGoogle,
+        signInWithEmail,
+        signUpWithEmail,
+        sendPasswordReset,
         signOut,
         getIdToken,
+        isAuthModalOpen,
+        authModalMode,
+        openAuthModal,
+        closeAuthModal,
         switchDemoUser,
       }}
     >

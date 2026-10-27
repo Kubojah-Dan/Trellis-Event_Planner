@@ -19,24 +19,24 @@ export const Sidebar: React.FC = () => {
   const navItems = [
     { label: 'Overview', to: `/events/${eventId}`, icon: LayoutDashboard, end: true },
     { label: 'Concept Studio', to: `/events/${eventId}/concepts`, icon: Sparkles },
-    { label: 'Budget & Spend', to: `/events/${eventId}/budget`, icon: DollarSign },
+    { label: 'Budget & Ledger', to: `/events/${eventId}/budget`, icon: DollarSign },
     { label: 'Checklist & Tasks', to: `/events/${eventId}/tasks`, icon: CheckSquare },
     { label: 'Timeline & Runsheet', to: `/events/${eventId}/timeline`, icon: Calendar },
-    { label: 'Vendors & Sourcing', to: `/events/${eventId}/vendors`, icon: Store },
-    { label: 'Ideas & Notes', to: `/events/${eventId}/ideas`, icon: Lightbulb },
+    { label: 'Vendors Pipeline', to: `/events/${eventId}/vendors`, icon: Store },
+    { label: 'Ideas & Drafting', to: `/events/${eventId}/ideas`, icon: Lightbulb },
     { label: 'Revisions & Diff', to: `/events/${eventId}/revisions`, icon: History },
   ];
 
   return (
     <>
       {/* Desktop Left Navigation */}
-      <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-warmgray-200 py-6 px-3 shrink-0">
-        <div className="px-3 mb-4">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+      <aside className="hidden md:flex flex-col w-64 py-8 px-4 shrink-0">
+        <div className="px-3 mb-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-moss">
             Event Workspace
           </p>
         </div>
-        <nav className="space-y-1">
+        <nav className="space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -45,10 +45,10 @@ export const Sidebar: React.FC = () => {
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  `flex items-center space-x-3 px-3.5 py-2.5 rounded-full text-xs font-medium transition-all duration-300 ${
                     isActive
-                      ? 'bg-evergreen-50 text-evergreen-900 border border-evergreen-100 font-semibold shadow-xs'
-                      : 'text-ink-muted hover:text-ink hover:bg-warmgray-100'
+                      ? 'bg-bark text-cream shadow-sm font-semibold translate-x-1'
+                      : 'text-ink-muted hover:text-terra hover:bg-white/60'
                   }`
                 }
               >
@@ -61,7 +61,7 @@ export const Sidebar: React.FC = () => {
       </aside>
 
       {/* Mobile Horizontal Sub-Navigation Bar */}
-      <div className="md:hidden sticky top-16 z-30 bg-surface border-b border-warmgray-200 overflow-x-auto py-2 px-4 flex space-x-2 no-scrollbar">
+      <div className="md:hidden sticky top-16 z-30 bg-cream/90 backdrop-blur-md border-b border-bark/10 overflow-x-auto py-2.5 px-4 flex space-x-2 no-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -70,10 +70,10 @@ export const Sidebar: React.FC = () => {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${
+                `flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-evergreen-900 text-white font-medium shadow-xs'
-                    : 'bg-paper text-ink-muted border border-warmgray-200 hover:bg-warmgray-100'
+                    ? 'bg-bark text-cream font-medium shadow-xs'
+                    : 'bg-white/60 text-ink-muted border border-bark/10 hover:bg-white'
                 }`
               }
             >

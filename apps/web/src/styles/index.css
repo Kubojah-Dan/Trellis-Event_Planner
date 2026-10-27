@@ -4,36 +4,161 @@
 
 @layer base {
   body {
-    background-color: #F7F5EF;
-    color: #202823;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #f5efe2;
+    color: #2a2620;
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, h4, .font-editorial {
-    font-family: 'Fraunces', Georgia, serif;
-    letter-spacing: -0.015em;
+  h1, h2, h3, h4, .font-serif, .font-editorial {
+    font-family: 'Instrument Serif', Georgia, serif;
+    letter-spacing: -0.02em;
   }
 }
 
-/* Custom interactive button styles matching Trellis editorial aesthetic */
+/* Atmospheric drifting background blobs */
+.blobs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(70px);
+  opacity: 0.55;
+}
+
+.blobs i {
+  position: absolute;
+  border-radius: 50%;
+  animation: drift 20s ease-in-out infinite;
+}
+
+.blobs i:nth-child(1) {
+  width: 520px;
+  height: 520px;
+  background: #a8b89a;
+  top: -100px;
+  left: -120px;
+}
+
+.blobs i:nth-child(2) {
+  width: 380px;
+  height: 380px;
+  background: #c47a55;
+  top: 30%;
+  right: -100px;
+  animation-delay: -7s;
+}
+
+.blobs i:nth-child(3) {
+  width: 440px;
+  height: 440px;
+  background: #b8c8d4;
+  bottom: -120px;
+  left: 30%;
+  animation-delay: -14s;
+}
+
+@keyframes drift {
+  50% {
+    transform: translate(60px, -40px) scale(1.1);
+  }
+}
+
+/* Float card bob animation */
+@keyframes bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-bob {
+  animation: bob 6s ease-in-out infinite;
+}
+
+.animate-bob-delayed {
+  animation: bob 7s ease-in-out infinite -3s;
+}
+
+/* Pulsing active status ring */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(90, 107, 74, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(90, 107, 74, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(90, 107, 74, 0);
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Highlighter underline element */
+.highlighter-ul {
+  position: relative;
+  display: inline-block;
+}
+
+.highlighter-ul::after {
+  content: "";
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  bottom: 8%;
+  height: 12px;
+  background: rgba(196, 122, 85, 0.25);
+  border-radius: 6px;
+  z-index: -1;
+}
+
+/* Pill CTA Buttons */
+.btn-pill-primary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-bark text-cream font-medium text-sm transition-all duration-300 hover:bg-terra hover:-translate-y-0.5 shadow-sm active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-pill-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white/70 backdrop-blur-md text-bark font-medium text-sm border border-bark/10 transition-all duration-300 hover:bg-white hover:border-terra/40 hover:text-terra hover:-translate-y-0.5 shadow-sm active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-pill-terra {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-terra text-white font-medium text-sm transition-all duration-300 hover:bg-terra-dark hover:-translate-y-0.5 shadow-sm active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Backward-compatible button aliases */
 .btn-primary {
-  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-evergreen-900 text-white font-medium text-sm hover:bg-evergreen-800 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-evergreen-700 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply btn-pill-primary;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-surface text-ink font-medium text-sm border border-warmgray-200 hover:bg-warmgray-100 hover:border-warmgray-300 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-evergreen-700 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply btn-pill-secondary;
 }
 
 .btn-accent {
-  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-coral-500 text-white font-medium text-sm hover:bg-coral-600 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply btn-pill-terra;
+}
+
+/* Glassy editorial card surfaces */
+.glass-card {
+  @apply bg-white/60 backdrop-blur-xl rounded-[28px] border border-bark/[0.08] p-6 transition-all duration-300 hover:bg-white/80 hover:-translate-y-1 hover:shadow-card-hover;
+}
+
+.glass-card-static {
+  @apply bg-white/60 backdrop-blur-xl rounded-[28px] border border-bark/[0.08] p-6 shadow-sm;
+}
+
+.editorial-card {
+  @apply glass-card-static;
 }
 
 /* Accessible focus ring */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-evergreen-700 focus:ring-offset-2 focus:ring-offset-paper;
-}
-
-/* Editorial card */
-.editorial-card {
-  @apply bg-surface rounded-xl border border-warmgray-200 shadow-warm p-6 transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-terra focus:ring-offset-2 focus:ring-offset-cream;
 }

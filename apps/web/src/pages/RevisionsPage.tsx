@@ -56,8 +56,8 @@ export const RevisionsPage: React.FC = () => {
 
   if (isLoading || !aggregate) {
     return (
-      <div className="editorial-card text-center py-20">
-        <div className="inline-block w-8 h-8 border-2 border-evergreen-900 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="glass-card text-center py-20 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <div className="inline-block w-8 h-8 border-2 border-bark border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-ink-muted">Loading version history...</p>
       </div>
     );
@@ -108,37 +108,37 @@ export const RevisionsPage: React.FC = () => {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="space-y-1">
-        <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
+      <div className="space-y-2">
+        <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase">
           Governed Re-planning
-        </span>
-        <h1 className="font-editorial text-3xl font-bold text-evergreen-900">
-          Plan Revisions & Version Diff
+        </div>
+        <h1 className="font-serif text-3xl sm:text-5xl font-normal text-bark">
+          Plan Revisions & <span className="italic text-terra">Version Diff</span>
         </h1>
-        <p className="text-xs text-ink-muted">
-          Current Version: <strong>v{event.currentVersion}</strong>. Trellis creates scoped proposals instead of overwriting your plan. All manual edits, locked items, and completed tasks are strictly preserved.
+        <p className="text-xs text-ink-muted max-w-xl leading-relaxed">
+          Current Version: <strong className="text-bark">v{event.currentVersion}</strong>. Trellis creates scoped proposals instead of overwriting your plan. All manual edits, locked items, and completed tasks are strictly preserved.
         </p>
       </div>
 
       {/* Propose Change Card */}
-      <div className="editorial-card p-6 space-y-4">
-        <h3 className="font-editorial text-lg font-bold text-evergreen-900 flex items-center space-x-2">
-          <Sparkles className="w-4 h-4 text-coral-500" />
+      <div className="glass-card p-6 sm:p-8 space-y-5 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <h3 className="font-serif text-2xl font-normal text-bark flex items-center space-x-2">
+          <Sparkles className="w-5 h-5 text-terra" />
           <span>Request an Adaptive Plan Change</span>
         </h3>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <textarea
             value={changeRequestText}
             onChange={(e) => setChangeRequestText(e.target.value)}
             rows={3}
             placeholder="Describe what needs to change (e.g., 'We need to reduce spending by $800' or 'Guest list increased to 90 people')..."
-            className="w-full p-3 rounded-lg border border-warmgray-200 bg-surface text-xs focus-ring"
+            className="w-full p-4 rounded-2xl border border-glass-border/80 bg-white/90 text-bark text-xs focus:outline-none focus:ring-2 focus:ring-terra/30 placeholder:text-ink-subtle"
           />
 
           {/* Quick Scenario Chips */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-ink-muted">Quick adjustments:</span>
+            <span className="text-[11px] font-bold text-ink-subtle">Quick adjustments:</span>
             {QUICK_SCENARIOS.map((scen, idx) => (
               <button
                 key={idx}
@@ -147,7 +147,7 @@ export const RevisionsPage: React.FC = () => {
                   setChangeRequestText(scen);
                   handleProposeRevision(scen);
                 }}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-paper hover:bg-warmgray-200 text-ink border border-warmgray-200 transition-colors"
+                className="text-[11px] px-3 py-1 rounded-full bg-sand/40 hover:bg-sand/70 text-bark border border-sand/60 transition-all font-medium"
               >
                 {scen.slice(0, 32)}...
               </button>
@@ -158,7 +158,7 @@ export const RevisionsPage: React.FC = () => {
             <button
               onClick={() => handleProposeRevision()}
               disabled={isProposing || !changeRequestText.trim()}
-              className="btn-primary text-xs flex items-center space-x-2"
+              className="btn-pill-primary text-xs flex items-center space-x-2 px-6 py-2.5"
             >
               {isProposing ? (
                 <span>Synthesizing Scoped Proposal...</span>
@@ -175,29 +175,29 @@ export const RevisionsPage: React.FC = () => {
 
       {/* Active Proposal Review Diff Card */}
       {activeProposal && activeDiff && (
-        <div className="editorial-card p-6 space-y-6 border-2 border-evergreen-900 bg-surface shadow-warm-lg">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-warmgray-200 pb-4">
+        <div className="glass-card p-6 sm:p-8 space-y-6 rounded-3xl border-2 border-bark/20 bg-white/90 shadow-card-hover backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-glass-border/80 pb-5">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                 Pending Approval · Base v{activeProposal.baseVersion}
               </span>
-              <h3 className="font-editorial text-2xl font-bold text-evergreen-900 mt-1">
+              <h3 className="font-serif text-2xl sm:text-3xl font-normal text-bark mt-2">
                 {activeProposal.requestedChange}
               </h3>
             </div>
 
             {/* Net Budget Impact Pill */}
             <div className="text-right">
-              <span className="text-[10px] uppercase font-bold text-ink-muted block">
+              <span className="text-[10px] uppercase font-bold text-ink-subtle block">
                 Net Budget Impact
               </span>
               <span
-                className={`text-base font-bold font-editorial ${
+                className={`text-xl font-serif font-bold ${
                   activeDiff.netBudgetDeltaMinorUnits > 0
-                    ? 'text-coral-600'
+                    ? 'text-terra'
                     : activeDiff.netBudgetDeltaMinorUnits < 0
-                    ? 'text-emerald-700'
-                    : 'text-ink'
+                    ? 'text-moss'
+                    : 'text-bark'
                 }`}
               >
                 {activeDiff.netBudgetDeltaMinorUnits > 0 ? '+' : ''}
@@ -208,31 +208,31 @@ export const RevisionsPage: React.FC = () => {
 
           {/* Operations List */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-muted">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-ink-subtle">
               Proposed Operations ({activeProposal.operations.length})
             </h4>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {activeProposal.operations.map((op, idx) => {
                 return (
                   <div
                     key={idx}
-                    className="p-3 rounded-lg border border-warmgray-200 bg-paper flex items-start justify-between text-xs"
+                    className="p-3.5 rounded-2xl border border-glass-border/80 bg-sand/20 flex items-start justify-between text-xs backdrop-blur-xs"
                   >
-                    <div className="flex items-start space-x-2.5">
-                      {op.op === 'add' && <PlusCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />}
-                      {op.op === 'update' && <Sparkles className="w-4 h-4 text-evergreen-800 shrink-0 mt-0.5" />}
-                      {op.op === 'remove' && <MinusCircle className="w-4 h-4 text-coral-600 shrink-0 mt-0.5" />}
+                    <div className="flex items-start space-x-3">
+                      {op.op === 'add' && <PlusCircle className="w-4 h-4 text-moss shrink-0 mt-0.5" />}
+                      {op.op === 'update' && <Sparkles className="w-4 h-4 text-terra shrink-0 mt-0.5" />}
+                      {op.op === 'remove' && <MinusCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />}
 
                       <div className="space-y-0.5">
-                        <span className="font-semibold text-ink capitalize">
+                        <span className="font-semibold text-bark capitalize">
                           {op.op} {op.entity} {op.entityId ? `(${op.entityId})` : ''}
                         </span>
-                        <p className="text-ink-muted text-xs">{op.reason}</p>
+                        <p className="text-ink-muted text-xs leading-relaxed">{op.reason}</p>
                       </div>
                     </div>
 
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-surface border border-warmgray-200 text-ink-muted shrink-0 ml-3">
+                    <span className="text-[10px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-white/70 border border-glass-border text-ink-subtle shrink-0 ml-3">
                       {op.requiresApproval ? 'Requires Approval' : 'Automatic Safe'}
                     </span>
                   </div>
@@ -245,7 +245,7 @@ export const RevisionsPage: React.FC = () => {
           {(activeProposal.assumptions.length > 0 || activeProposal.unresolvedQuestions.length > 0) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               {activeProposal.assumptions.length > 0 && (
-                <div className="p-3 rounded-lg bg-paper border border-warmgray-200 space-y-1">
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-1">
                   <span className="text-[10px] uppercase font-bold text-amber-800 block">
                     AI Assumptions
                   </span>
@@ -258,8 +258,8 @@ export const RevisionsPage: React.FC = () => {
               )}
 
               {activeProposal.unresolvedQuestions.length > 0 && (
-                <div className="p-3 rounded-lg bg-paper border border-warmgray-200 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-coral-700 block">
+                <div className="p-4 rounded-2xl bg-rose-50/70 border border-rose-200/80 space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-rose-800 block">
                     Unresolved Questions
                   </span>
                   <ul className="space-y-1 text-ink-muted">
@@ -273,22 +273,22 @@ export const RevisionsPage: React.FC = () => {
           )}
 
           {/* Decision Buttons */}
-          <div className="pt-4 border-t border-warmgray-200 flex items-center justify-between">
+          <div className="pt-5 border-t border-glass-border/80 flex items-center justify-between">
             <button
               onClick={() => decideMutation.mutate({ proposalId: activeProposal.id, decision: 'rejected' })}
               disabled={decideMutation.isPending}
-              className="btn-secondary text-xs text-coral-700 border-coral-200 hover:bg-coral-50 flex items-center space-x-1.5"
+              className="btn-pill-secondary text-xs text-rose-700 hover:text-rose-900 border-rose-200 hover:bg-rose-50 flex items-center space-x-1.5 px-4 py-2"
             >
-              <XCircle className="w-4 h-4 text-coral-600" />
+              <XCircle className="w-4 h-4 text-rose-600" />
               <span>Reject Proposal</span>
             </button>
 
             <button
               onClick={() => decideMutation.mutate({ proposalId: activeProposal.id, decision: 'approved' })}
               disabled={decideMutation.isPending}
-              className="btn-primary text-xs flex items-center space-x-1.5 bg-evergreen-900"
+              className="btn-pill-primary text-xs flex items-center space-x-1.5 px-6 py-2.5"
             >
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-moss" />
               <span>Approve & Commit Version {event.currentVersion + 1}</span>
             </button>
           </div>
@@ -296,32 +296,32 @@ export const RevisionsPage: React.FC = () => {
       )}
 
       {/* Committed Version History Timeline */}
-      <div className="editorial-card p-6 space-y-4">
-        <h3 className="font-editorial text-lg font-bold text-evergreen-900 flex items-center space-x-2">
-          <History className="w-4 h-4 text-evergreen-800" />
+      <div className="glass-card p-6 sm:p-8 space-y-5 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <h3 className="font-serif text-2xl font-normal text-bark flex items-center space-x-2">
+          <History className="w-5 h-5 text-moss" />
           <span>Committed Version Audit Trail</span>
         </h3>
 
-        <div className="divide-y divide-warmgray-100">
+        <div className="divide-y divide-glass-border/60">
           {versions.map((ver) => (
-            <div key={ver.versionNumber} className="py-3 flex items-start justify-between text-xs">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-evergreen-900 font-editorial text-sm">
+            <div key={ver.versionNumber} className="py-4 flex items-start justify-between text-xs">
+              <div className="space-y-1.5">
+                <div className="flex items-center space-x-2.5">
+                  <span className="font-serif font-bold text-bark text-base">
                     Version {ver.versionNumber}
                   </span>
-                  <span className="px-1.5 py-0.5 rounded bg-paper text-ink-muted border border-warmgray-200 text-[10px] font-semibold uppercase">
+                  <span className="px-2.5 py-0.5 rounded-full bg-sand/40 text-bark border border-sand/60 text-[10px] font-semibold uppercase">
                     {ver.changeSource.replace('_', ' ')}
                   </span>
                 </div>
-                <p className="text-ink">{ver.changeSummary}</p>
-                <span className="text-[11px] text-ink-muted">
+                <p className="text-ink text-xs leading-relaxed">{ver.changeSummary}</p>
+                <span className="text-[11px] text-ink-subtle">
                   Committed {ver.createdAt.slice(0, 16).replace('T', ' ')}
                 </span>
               </div>
 
               {ver.versionNumber === event.currentVersion && (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
+                <span className="px-3 py-1 rounded-full bg-sand/50 text-moss border border-sand/70 text-[10px] font-bold">
                   Active State
                 </span>
               )}

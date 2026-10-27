@@ -53,8 +53,8 @@ export const VendorsPage: React.FC = () => {
 
   if (isLoading || !aggregate) {
     return (
-      <div className="editorial-card text-center py-20">
-        <div className="inline-block w-8 h-8 border-2 border-evergreen-900 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="glass-card text-center py-20 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <div className="inline-block w-8 h-8 border-2 border-bark border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-ink-muted">Loading vendor pipeline...</p>
       </div>
     );
@@ -97,20 +97,20 @@ export const VendorsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase mb-2">
             Sourcing & Requirements
-          </span>
-          <h1 className="font-editorial text-3xl font-bold text-evergreen-900">
-            Vendor Pipeline & Checklist
+          </div>
+          <h1 className="font-serif text-3xl sm:text-5xl font-normal text-bark">
+            Vendor Pipeline & <span className="italic text-terra">Checklist</span>
           </h1>
-          <p className="text-xs text-ink-muted mt-1">
+          <p className="text-xs text-ink-muted mt-1 max-w-xl leading-relaxed">
             Track requirements, candidate inquiries, and verified quotes. No vendors or availability are ever fabricated.
           </p>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn-primary text-xs flex items-center space-x-1.5 self-start"
+          className="btn-pill-primary text-xs flex items-center space-x-1.5 self-start px-5 py-2.5"
         >
           <Plus className="w-4 h-4" />
           <span>Add Vendor Category</span>
@@ -118,20 +118,20 @@ export const VendorsPage: React.FC = () => {
       </div>
 
       {/* Sourcing Honesty Notice */}
-      <div className="p-4 rounded-xl bg-paper border border-warmgray-200 text-xs text-ink-muted flex items-start space-x-3">
-        <ShieldAlert className="w-4 h-4 text-evergreen-800 shrink-0 mt-0.5" />
+      <div className="glass-card p-5 rounded-2xl border border-glass-border/70 backdrop-blur-md text-xs text-ink-muted flex items-start space-x-3.5">
+        <ShieldAlert className="w-4 h-4 text-moss shrink-0 mt-0.5" />
         <div>
-          <span className="font-bold text-ink block">Evidence & Provenance Policy</span>
-          <p>
-            Trellis establishes your vendor requirements pipeline from your concept. Candidates, prices, and availability are verified through real organizer quotes or configured API integrations. Unverified entries remain strictly labelled <em>Needs confirmation</em>.
+          <span className="font-bold text-bark block text-sm">Evidence & Provenance Policy</span>
+          <p className="mt-0.5 leading-relaxed">
+            Trellis establishes your vendor requirements pipeline from your concept. Candidates, prices, and availability are verified through real organizer quotes or configured API integrations. Unverified entries remain strictly labelled <em className="text-terra">Needs confirmation</em>.
           </p>
         </div>
       </div>
 
       {/* Vendors Pipeline Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {vendors.length === 0 ? (
-          <div className="md:col-span-2 editorial-card text-center py-12 text-ink-muted text-xs">
+          <div className="md:col-span-2 glass-card text-center py-12 text-ink-muted text-xs rounded-2xl border border-glass-border/70 backdrop-blur-md">
             No vendor requirements recorded yet.
           </div>
         ) : (
@@ -140,23 +140,25 @@ export const VendorsPage: React.FC = () => {
             return (
               <div
                 key={vendor.id}
-                className={`editorial-card p-5 space-y-4 transition-all ${
-                  isBooked ? 'border-emerald-200 bg-emerald-50/20' : 'bg-surface'
+                className={`glass-card p-6 rounded-3xl space-y-4 transition-all duration-200 border backdrop-blur-md ${
+                  isBooked
+                    ? 'border-moss/40 bg-sand/20 shadow-card-float'
+                    : 'border-glass-border/70 bg-white/70 hover:border-sand hover:shadow-card-float'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-paper text-ink-muted border border-warmgray-200">
+                    <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-sand/50 text-bark border border-sand/70">
                       {vendor.category}
                     </span>
-                    <h3 className="font-editorial text-lg font-bold text-ink mt-2">
+                    <h3 className="font-serif text-2xl font-normal text-bark mt-2.5">
                       {vendor.name}
                     </h3>
                   </div>
 
                   <button
                     onClick={() => deleteMutation.mutate(vendor.id)}
-                    className="p-1 rounded text-ink-light hover:text-coral-600 hover:bg-coral-50 transition-colors"
+                    className="p-1.5 rounded-full text-ink-subtle hover:text-terra hover:bg-rose-50 transition-colors"
                     title="Delete vendor"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -170,21 +172,21 @@ export const VendorsPage: React.FC = () => {
                 )}
 
                 {vendor.priceEvidence && (
-                  <div className="p-2.5 rounded bg-paper border border-warmgray-200 text-xs font-medium text-ink">
+                  <div className="p-3 rounded-xl bg-sand/30 border border-sand/50 text-xs font-medium text-bark">
                     {vendor.priceEvidence}
                   </div>
                 )}
 
                 {/* Sourcing Stage & Provenance */}
-                <div className="pt-3 border-t border-warmgray-100 flex items-center justify-between text-xs">
+                <div className="pt-3.5 border-t border-glass-border/80 flex items-center justify-between text-xs">
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-ink-muted block">
+                    <span className="text-[10px] uppercase font-bold text-ink-subtle block">
                       Pipeline Stage
                     </span>
                     <select
                       value={vendor.stage}
                       onChange={(e) => handleStageChange(vendor, e.target.value as VendorStage)}
-                      className="bg-paper border border-warmgray-200 rounded px-2.5 py-1 text-xs text-ink font-semibold focus-ring"
+                      className="bg-white/80 border border-glass-border/80 rounded-full px-3 py-1 text-xs text-bark font-semibold focus:outline-none focus:ring-2 focus:ring-terra/30"
                     >
                       <option value="needed">1. Needed</option>
                       <option value="researching">2. Researching</option>
@@ -197,10 +199,10 @@ export const VendorsPage: React.FC = () => {
                   </div>
 
                   <div className="text-right">
-                    <span className="text-[10px] uppercase font-bold text-ink-muted block">
+                    <span className="text-[10px] uppercase font-bold text-ink-subtle block">
                       Provenance
                     </span>
-                    <span className="text-[11px] font-semibold text-evergreen-900 capitalize">
+                    <span className="text-[11px] font-semibold text-moss capitalize px-2.5 py-0.5 rounded-full bg-sand/40 border border-sand/60 inline-block mt-0.5">
                       {vendor.provenance.replace('_', ' ')}
                     </span>
                   </div>
@@ -214,14 +216,14 @@ export const VendorsPage: React.FC = () => {
       {/* Add Vendor Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-surface rounded-xl max-w-md w-full p-6 space-y-4 shadow-warm-lg border border-warmgray-200">
-            <h3 className="font-editorial text-xl font-bold text-evergreen-900">
+          <div className="glass-card bg-cream rounded-3xl max-w-md w-full p-7 space-y-5 shadow-card-hover border border-glass-border">
+            <h3 className="font-serif text-2xl font-normal text-bark">
               Add Vendor Category / Candidate
             </h3>
 
             <form onSubmit={handleCreateVendor} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Vendor Name / Requirement
                 </label>
                 <input
@@ -229,13 +231,13 @@ export const VendorsPage: React.FC = () => {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g. Blue Hill Farm Catering, Sound System Rental"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Category
                 </label>
                 <input
@@ -243,13 +245,13 @@ export const VendorsPage: React.FC = () => {
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="e.g. Catering, Venue, Photography"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Quoted Price / Estimate (Optional)
                 </label>
                 <input
@@ -257,12 +259,12 @@ export const VendorsPage: React.FC = () => {
                   value={newQuote}
                   onChange={(e) => setNewQuote(e.target.value)}
                   placeholder="e.g. $2,400 for 5 hours"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Notes / Source URL
                 </label>
                 <textarea
@@ -270,19 +272,19 @@ export const VendorsPage: React.FC = () => {
                   onChange={(e) => setNewNotes(e.target.value)}
                   rows={2}
                   placeholder="Candidate website, package inclusions, or contact email..."
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2.5 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="btn-secondary text-xs"
+                  className="btn-pill-secondary text-xs px-4 py-2"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary text-xs">
+                <button type="submit" className="btn-pill-primary text-xs px-5 py-2">
                   Save Vendor
                 </button>
               </div>

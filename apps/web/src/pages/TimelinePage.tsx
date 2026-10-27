@@ -27,8 +27,8 @@ export const TimelinePage: React.FC = () => {
 
   if (isLoading || !aggregate) {
     return (
-      <div className="editorial-card text-center py-20">
-        <div className="inline-block w-8 h-8 border-2 border-evergreen-900 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="glass-card text-center py-20 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <div className="inline-block w-8 h-8 border-2 border-bark border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-ink-muted">Loading celebration timeline...</p>
       </div>
     );
@@ -58,25 +58,25 @@ export const TimelinePage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase mb-2">
             Chronology & Agenda
-          </span>
-          <h1 className="font-editorial text-3xl font-bold text-evergreen-900">
-            Celebration Timeline
+          </div>
+          <h1 className="font-serif text-3xl sm:text-5xl font-normal text-bark">
+            Celebration <span className="italic text-terra">Timeline</span>
           </h1>
-          <p className="text-xs text-ink-muted mt-1">
+          <p className="text-xs text-ink-muted mt-1 max-w-xl leading-relaxed">
             Preparation milestones separated from event-day operational schedule. Timezone: {event.timezone}.
           </p>
         </div>
 
         {/* View Switcher */}
-        <div className="flex rounded-lg border border-warmgray-200 bg-surface p-1 text-xs self-start">
+        <div className="flex rounded-full border border-glass-border/80 bg-white/70 p-1 text-xs self-start backdrop-blur-md">
           <button
             onClick={() => setViewMode('prep')}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors flex items-center space-x-1.5 ${
+            className={`px-4 py-2 rounded-full font-medium transition-all flex items-center space-x-1.5 ${
               viewMode === 'prep'
-                ? 'bg-evergreen-900 text-white shadow-xs'
-                : 'text-ink-muted hover:text-ink'
+                ? 'bg-bark text-cream shadow-xs font-semibold'
+                : 'text-ink-muted hover:text-bark'
             }`}
           >
             <CalendarIcon className="w-3.5 h-3.5" />
@@ -85,10 +85,10 @@ export const TimelinePage: React.FC = () => {
 
           <button
             onClick={() => setViewMode('runsheet')}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors flex items-center space-x-1.5 ${
+            className={`px-4 py-2 rounded-full font-medium transition-all flex items-center space-x-1.5 ${
               viewMode === 'runsheet'
-                ? 'bg-evergreen-900 text-white shadow-xs'
-                : 'text-ink-muted hover:text-ink'
+                ? 'bg-bark text-cream shadow-xs font-semibold'
+                : 'text-ink-muted hover:text-bark'
             }`}
           >
             <SunMedium className="w-3.5 h-3.5" />
@@ -99,12 +99,12 @@ export const TimelinePage: React.FC = () => {
 
       {/* Date Issues Alert if Chronology Violations Exist */}
       {!chronology.isValid && (
-        <div className="p-4 rounded-xl bg-coral-50 border border-coral-200 text-xs text-coral-900 space-y-1">
-          <div className="flex items-center space-x-2 font-bold text-sm text-coral-800">
-            <AlertTriangle className="w-4 h-4 text-coral-600" />
+        <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
+          <div className="flex items-center space-x-2 font-bold text-sm text-terra">
+            <AlertTriangle className="w-4 h-4 text-terra" />
             <span>Chronology Warnings Detected</span>
           </div>
-          <ul className="list-disc list-inside space-y-0.5 text-xs text-coral-800">
+          <ul className="list-disc list-inside space-y-0.5 text-xs text-amber-900">
             {chronology.issues.map((iss, i) => (
               <li key={i}>{iss.message}</li>
             ))}
@@ -114,17 +114,17 @@ export const TimelinePage: React.FC = () => {
 
       {/* Mode 1: Preparation Milestones */}
       {viewMode === 'prep' && (
-        <div className="editorial-card space-y-6">
-          <div className="flex items-center justify-between border-b border-warmgray-100 pb-3">
-            <h3 className="font-editorial text-lg font-bold text-evergreen-900">
+        <div className="glass-card p-6 sm:p-8 space-y-6 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-glass-border/80 pb-4">
+            <h3 className="font-serif text-xl font-normal text-bark">
               Preparation Milestones Sequence
             </h3>
-            <span className="text-xs text-ink-muted">
+            <span className="text-xs px-3 py-1 rounded-full bg-sand/60 text-bark font-medium">
               Target Date: {event.eventDate ? event.eventDate.slice(0, 10) : 'TBD'}
             </span>
           </div>
 
-          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-warmgray-200">
+          <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-sand/70">
             {tasks.map((task, idx) => {
               const isDone = task.status === 'done';
               return (
@@ -133,23 +133,23 @@ export const TimelinePage: React.FC = () => {
                   <span
                     className={`absolute -left-6 top-1 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${
                       isDone
-                        ? 'bg-emerald-600 border-emerald-600 text-white'
-                        : 'bg-surface border-evergreen-800 text-evergreen-900'
+                        ? 'bg-moss border-moss text-white'
+                        : 'bg-cream border-bark text-bark'
                     }`}
                   >
                     {isDone ? '✓' : idx + 1}
                   </span>
 
-                  <div className="p-4 rounded-xl border border-warmgray-200 bg-surface flex-1 space-y-1 shadow-xs">
+                  <div className="p-4 rounded-2xl border border-glass-border/70 bg-white/70 flex-1 space-y-1 backdrop-blur-md hover:border-sand transition-all">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-ink">{task.title}</span>
+                      <span className="text-sm font-semibold text-bark">{task.title}</span>
                       {task.dueAt && (
-                        <span className="text-xs font-medium text-ink-muted bg-paper px-2 py-0.5 rounded border border-warmgray-200">
+                        <span className="text-xs font-medium text-ink-muted bg-sand/40 px-2.5 py-0.5 rounded-full border border-sand/60">
                           {task.dueAt.slice(0, 10)}
                         </span>
                       )}
                     </div>
-                    {task.purpose && <p className="text-xs text-ink-muted">{task.purpose}</p>}
+                    {task.purpose && <p className="text-xs text-ink-muted leading-relaxed">{task.purpose}</p>}
                   </div>
                 </div>
               );
@@ -160,30 +160,30 @@ export const TimelinePage: React.FC = () => {
 
       {/* Mode 2: Day-of Runsheet */}
       {viewMode === 'runsheet' && (
-        <div className="editorial-card space-y-6">
-          <div className="flex items-center justify-between border-b border-warmgray-100 pb-3">
-            <h3 className="font-editorial text-lg font-bold text-evergreen-900">
+        <div className="glass-card p-6 sm:p-8 space-y-6 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-glass-border/80 pb-4">
+            <h3 className="font-serif text-xl font-normal text-bark">
               Celebration Day Run-of-Show
             </h3>
-            <span className="text-xs text-ink-muted">
+            <span className="text-xs px-3 py-1 rounded-full bg-sand/60 text-bark font-medium">
               Live operational schedule · {event.timezone}
             </span>
           </div>
 
-          <div className="divide-y divide-warmgray-100">
+          <div className="divide-y divide-glass-border/60">
             {dayOfRunsheet.map((item, idx) => (
-              <div key={idx} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-baseline space-x-3">
-                  <span className="font-bold text-evergreen-900 font-mono w-20 shrink-0">
+              <div key={idx} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-baseline space-x-4">
+                  <span className="font-mono font-bold text-bark w-20 shrink-0 text-sm">
                     {item.time}
                   </span>
                   <div>
-                    <span className="font-semibold text-ink text-sm block">{item.title}</span>
-                    <span className="text-ink-muted text-xs">{item.notes}</span>
+                    <span className="font-semibold text-bark text-sm block">{item.title}</span>
+                    <span className="text-ink-muted text-xs leading-relaxed">{item.notes}</span>
                   </div>
                 </div>
 
-                <span className="self-start sm:self-center px-2 py-0.5 rounded bg-warmgray-100 text-ink-muted border border-warmgray-200 text-[11px] whitespace-nowrap">
+                <span className="self-start sm:self-center px-3 py-1 rounded-full bg-sand/50 text-bark border border-sand/70 text-[11px] whitespace-nowrap">
                   Lead: {item.pic}
                 </span>
               </div>

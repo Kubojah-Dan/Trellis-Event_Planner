@@ -66,8 +66,8 @@ export const TasksPage: React.FC = () => {
 
   if (isLoading || !aggregate) {
     return (
-      <div className="editorial-card text-center py-20">
-        <div className="inline-block w-8 h-8 border-2 border-evergreen-900 border-t-transparent rounded-full animate-spin mb-3" />
+      <div className="glass-card text-center py-20 rounded-3xl border border-glass-border/70 backdrop-blur-md">
+        <div className="inline-block w-8 h-8 border-2 border-bark border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-sm text-ink-muted">Loading tasks & checklist...</p>
       </div>
     );
@@ -150,20 +150,20 @@ export const TasksPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-coral-600">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sand/60 border border-sand text-moss text-xs font-semibold tracking-wider uppercase mb-2">
             Operational Plan
-          </span>
-          <h1 className="font-editorial text-3xl font-bold text-evergreen-900">
-            Checklist & Milestones
+          </div>
+          <h1 className="font-serif text-3xl sm:text-5xl font-normal text-bark">
+            Checklist & <span className="italic text-terra">Milestones</span>
           </h1>
-          <p className="text-xs text-ink-muted mt-1">
+          <p className="text-xs text-ink-muted mt-1 max-w-xl leading-relaxed">
             Tasks can depend on prerequisites. Only organizer actions mark tasks complete—AI never checks off real work.
           </p>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn-primary text-xs flex items-center space-x-1.5 self-start"
+          className="btn-pill-primary text-xs flex items-center space-x-1.5 self-start px-5 py-2.5"
         >
           <Plus className="w-4 h-4" />
           <span>Add Task</span>
@@ -172,11 +172,11 @@ export const TasksPage: React.FC = () => {
 
       {/* Cycle warning if detected */}
       {cycleResult.hasCycles && (
-        <div className="p-4 rounded-xl bg-coral-50 border border-coral-200 text-xs text-coral-900 flex items-start space-x-3">
-          <AlertCircle className="w-5 h-5 text-coral-600 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-start space-x-3">
+          <AlertCircle className="w-5 h-5 text-terra shrink-0 mt-0.5" />
           <div>
             <span className="font-bold text-sm block">Dependency Cycle Detected!</span>
-            <p className="mt-0.5">
+            <p className="mt-0.5 leading-relaxed">
               Some tasks depend on each other in a circular loop ({cycleResult.cyclePaths.map((p) => p.join(' → ')).join('; ')}).
               Please edit task dependencies to restore a valid chronological sequence.
             </p>
@@ -185,8 +185,8 @@ export const TasksPage: React.FC = () => {
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center space-x-2 border-b border-warmgray-200 pb-3 text-xs overflow-x-auto">
-        <Filter className="w-3.5 h-3.5 text-ink-muted mr-1 shrink-0" />
+      <div className="flex items-center space-x-2 border-b border-glass-border/80 pb-3 text-xs overflow-x-auto">
+        <Filter className="w-3.5 h-3.5 text-ink-subtle mr-1 shrink-0" />
         {[
           { key: 'all', label: `All (${tasks.length})` },
           { key: 'actionable', label: `Ready to Do (${actionable.length})` },
@@ -196,10 +196,10 @@ export const TasksPage: React.FC = () => {
           <button
             key={tab.key}
             onClick={() => setFilter(tab.key as any)}
-            className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors font-medium ${
+            className={`px-4 py-1.5 rounded-full whitespace-nowrap transition-all font-medium text-xs ${
               filter === tab.key
-                ? 'bg-evergreen-900 text-white shadow-xs'
-                : 'text-ink-muted hover:text-ink hover:bg-warmgray-100'
+                ? 'bg-bark text-cream shadow-xs font-semibold'
+                : 'bg-white/60 text-ink-muted hover:text-bark hover:bg-white border border-glass-border/60'
             }`}
           >
             {tab.label}
@@ -210,7 +210,7 @@ export const TasksPage: React.FC = () => {
       {/* Tasks List */}
       <div className="space-y-3">
         {filteredTasks.length === 0 ? (
-          <div className="editorial-card text-center py-12 text-ink-muted text-xs">
+          <div className="glass-card text-center py-12 text-ink-muted text-xs rounded-2xl border border-glass-border/70 backdrop-blur-md">
             No tasks found matching the active filter.
           </div>
         ) : (
@@ -222,40 +222,42 @@ export const TasksPage: React.FC = () => {
             return (
               <div
                 key={task.id}
-                className={`editorial-card p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                  isDone ? 'bg-warmgray-50/60 opacity-80' : 'bg-surface hover:border-warmgray-300'
+                className={`glass-card p-4 sm:p-5 rounded-2xl border transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md ${
+                  isDone
+                    ? 'bg-sand/20 border-glass-border/60 opacity-75'
+                    : 'bg-white/70 border-glass-border/70 hover:border-sand hover:shadow-card-float'
                 }`}
               >
                 {/* Left check and title */}
                 <div className="flex items-start space-x-3.5 min-w-0">
                   <button
                     onClick={() => handleToggleDone(task)}
-                    className="mt-0.5 text-evergreen-900 hover:text-evergreen-700 transition-colors shrink-0"
+                    className="mt-0.5 text-bark hover:text-terra transition-colors shrink-0"
                     title={isDone ? 'Mark not started' : 'Mark completed'}
                   >
                     {isDone ? (
-                      <CheckSquare className="w-5 h-5 text-emerald-600" />
+                      <CheckSquare className="w-5 h-5 text-moss" />
                     ) : (
-                      <Square className="w-5 h-5 text-warmgray-400 hover:text-ink" />
+                      <Square className="w-5 h-5 text-sand hover:text-bark" />
                     )}
                   </button>
 
                   <div className="space-y-1 min-w-0">
                     <span
                       className={`text-sm font-semibold block truncate ${
-                        isDone ? 'line-through text-ink-muted' : 'text-ink'
+                        isDone ? 'line-through text-ink-subtle' : 'text-bark'
                       }`}
                     >
                       {task.title}
                     </span>
                     {task.purpose && (
-                      <p className="text-xs text-ink-muted line-clamp-1">{task.purpose}</p>
+                      <p className="text-xs text-ink-muted line-clamp-1 leading-relaxed">{task.purpose}</p>
                     )}
 
                     {/* Meta tags: due date & dependencies */}
                     <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-ink-muted">
                       {task.dueAt && (
-                        <span className="flex items-center space-x-1 bg-paper px-2 py-0.5 rounded border border-warmgray-200">
+                        <span className="flex items-center space-x-1 bg-sand/40 px-2.5 py-0.5 rounded-full border border-sand/60">
                           <Clock className="w-3 h-3 text-ink-muted" />
                           <span>Due {task.dueAt.slice(0, 10)}</span>
                         </span>
@@ -263,10 +265,10 @@ export const TasksPage: React.FC = () => {
 
                       {hasDependencies && (
                         <span
-                          className={`flex items-center space-x-1 px-2 py-0.5 rounded border ${
+                          className={`flex items-center space-x-1 px-2.5 py-0.5 rounded-full border ${
                             blockedInfo
                               ? 'bg-amber-50 text-amber-800 border-amber-200 font-medium'
-                              : 'bg-paper text-ink-muted border-warmgray-200'
+                              : 'bg-sand/40 text-ink-muted border-sand/60'
                           }`}
                         >
                           <LinkIcon className="w-3 h-3" />
@@ -278,7 +280,7 @@ export const TasksPage: React.FC = () => {
                         </span>
                       )}
 
-                      <span className="text-[10px] uppercase font-bold text-ink-light">
+                      <span className="text-[10px] uppercase font-bold text-ink-subtle">
                         {task.provenance.replace('_', ' ')}
                       </span>
                     </div>
@@ -290,7 +292,7 @@ export const TasksPage: React.FC = () => {
                   <select
                     value={task.status}
                     onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                    className="text-xs bg-paper border border-warmgray-200 rounded-lg px-2.5 py-1.5 text-ink focus-ring font-medium"
+                    className="text-xs bg-white/80 border border-glass-border/80 rounded-full px-3 py-1.5 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 font-medium"
                   >
                     <option value="not_started">Not Started</option>
                     <option value="in_progress">In Progress</option>
@@ -301,19 +303,19 @@ export const TasksPage: React.FC = () => {
 
                   <button
                     onClick={() => handleToggleLock(task)}
-                    className={`p-1.5 rounded-lg border text-xs transition-colors ${
+                    className={`p-1.5 rounded-full border text-xs transition-colors ${
                       task.locked
-                        ? 'bg-amber-50 text-amber-800 border-amber-200'
-                        : 'bg-surface text-ink-muted border-warmgray-200 hover:bg-warmgray-100'
+                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : 'bg-sand/30 text-ink-muted border-sand/50 hover:bg-sand/60'
                     }`}
                     title={task.locked ? 'Locked: Protected from replanning' : 'Unlocked: Can be revised'}
                   >
-                    {task.locked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                    {task.locked ? <Lock className="w-3.5 h-3.5 text-amber-800" /> : <Unlock className="w-3.5 h-3.5" />}
                   </button>
 
                   <button
                     onClick={() => deleteMutation.mutate(task.id)}
-                    className="p-1.5 rounded-lg border border-transparent hover:border-coral-200 hover:bg-coral-50 text-coral-600 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-rose-50 text-ink-muted hover:text-terra transition-colors"
                     title="Delete task"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -328,14 +330,14 @@ export const TasksPage: React.FC = () => {
       {/* Add Task Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-surface rounded-xl max-w-md w-full p-6 space-y-4 shadow-warm-lg border border-warmgray-200">
-            <h3 className="font-editorial text-xl font-bold text-evergreen-900">
+          <div className="glass-card bg-cream rounded-3xl max-w-md w-full p-7 space-y-5 shadow-card-hover border border-glass-border">
+            <h3 className="font-serif text-2xl font-normal text-bark">
               Add Checklist Task
             </h3>
 
             <form onSubmit={handleCreateTask} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Task Title
                 </label>
                 <input
@@ -343,13 +345,13 @@ export const TasksPage: React.FC = () => {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. Schedule venue walkthrough"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Purpose / Details
                 </label>
                 <input
@@ -357,30 +359,30 @@ export const TasksPage: React.FC = () => {
                   value={newPurpose}
                   onChange={(e) => setNewPurpose(e.target.value)}
                   placeholder="e.g. Inspect load-in elevator and audio sockets"
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                   Target Due Date
                 </label>
                 <input
                   type="date"
                   value={newDueAt}
                   onChange={(e) => setNewDueAt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-warmgray-200 bg-surface text-ink focus-ring"
+                  className="w-full px-4 py-2.5 rounded-xl border border-glass-border/80 bg-white/90 text-bark focus:outline-none focus:ring-2 focus:ring-terra/30 focus:border-terra"
                 />
               </div>
 
               {tasks.length > 0 && (
                 <div>
-                  <label className="block font-semibold text-ink uppercase tracking-wider mb-1">
+                  <label className="block font-bold text-bark uppercase tracking-wider mb-1.5">
                     Prerequisite Tasks (Dependencies)
                   </label>
-                  <div className="max-h-36 overflow-y-auto space-y-1.5 border border-warmgray-200 p-2 rounded-lg bg-paper/50">
+                  <div className="max-h-36 overflow-y-auto space-y-2 border border-glass-border/80 p-3 rounded-2xl bg-white/60">
                     {tasks.map((t) => (
-                      <label key={t.id} className="flex items-center space-x-2 text-ink cursor-pointer">
+                      <label key={t.id} className="flex items-center space-x-2 text-bark cursor-pointer">
                         <input
                           type="checkbox"
                           checked={selectedDependencies.includes(t.id)}
@@ -391,24 +393,24 @@ export const TasksPage: React.FC = () => {
                               setSelectedDependencies(selectedDependencies.filter((id) => id !== t.id));
                             }
                           }}
-                          className="rounded text-evergreen-900 focus:ring-evergreen-700"
+                          className="rounded text-bark focus:ring-bark accent-bark"
                         />
-                        <span className="truncate">{t.title}</span>
+                        <span className="truncate text-xs">{t.title}</span>
                       </label>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex justify-end space-x-2.5 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="btn-secondary text-xs"
+                  className="btn-pill-secondary text-xs px-4 py-2"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary text-xs">
+                <button type="submit" className="btn-pill-primary text-xs px-5 py-2">
                   Save Task
                 </button>
               </div>
