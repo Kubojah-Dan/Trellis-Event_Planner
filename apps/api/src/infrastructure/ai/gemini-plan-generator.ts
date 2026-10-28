@@ -86,6 +86,10 @@ export class GeminiPlanGenerator implements PlanGenerator {
       throw new AppError(502, 'INVALID_MODEL_JSON', 'Groq model output could not be parsed as JSON.');
     }
 
+    if (parsed && typeof parsed === 'object' && parsed.updatedBrief) {
+      this.sanitizeBriefForSchema(parsed.updatedBrief);
+    }
+
     const validated = schema.safeParse(parsed);
     if (!validated.success) {
       console.warn('Groq model schema validation failed:', validated.error.issues);
@@ -93,6 +97,31 @@ export class GeminiPlanGenerator implements PlanGenerator {
     }
 
     return validated.data;
+  }
+
+  private sanitizeBriefForSchema(b: any) {
+    if (!b || typeof b !== 'object') return;
+    if (typeof b.dateFlexibility === 'string') {
+      const lower = b.dateFlexibility.toLowerCase();
+      if (lower.includes('fix') || lower.includes('exact') || lower.includes('specific')) {
+        b.dateFlexibility = 'fixed';
+      } else if (lower.includes('flex')) {
+        b.dateFlexibility = 'flexible';
+      } else {
+        b.dateFlexibility = 'unknown';
+      }
+    }
+    if (typeof b.guestCount === 'number') {
+      b.guestCount = { target: b.guestCount };
+    }
+    if (Array.isArray(b.priorities)) {
+      b.priorities = b.priorities.map((p: any) =>
+        typeof p === 'string' ? { key: p, weight: 3, source: 'user' } : p
+      );
+    }
+    if (typeof b.totalBudgetMinorUnits === 'number' && b.totalBudgetMinorUnits > 0 && b.totalBudgetMinorUnits < 50000) {
+      b.totalBudgetMinorUnits = b.totalBudgetMinorUnits * 100;
+    }
   }
 
   private async generateStructuredJson<T>(
@@ -128,6 +157,10 @@ export class GeminiPlanGenerator implements PlanGenerator {
           } catch (e) {
             console.error('Gemini output was not valid JSON:', cleanedText);
             throw new AppError(502, 'INVALID_MODEL_JSON', 'Model output could not be parsed as JSON.');
+          }
+
+          if (parsed && typeof parsed === 'object' && parsed.updatedBrief) {
+            this.sanitizeBriefForSchema(parsed.updatedBrief);
           }
 
           const validated = schema.safeParse(parsed);
@@ -173,11 +206,21 @@ export class GeminiPlanGenerator implements PlanGenerator {
   async selectNextQuestion(brief: EventBrief, userInput?: string): Promise<DiscoveryTurnResponse> {
     const systemInstruction = `You are Trellis, an intelligent celebration planning assistant.
 Analyze the user's current event brief and any new user input.
-Evaluate what is currently known, what assumptions have been made, and determine if enough high-impact information is known to draft a plan.
-High-impact priority heuristic: priority = decision impact * uncertainty * urgency.
-If key constraints (such as guest count or atmosphere) are missing, formulate the single highest-impact follow-up question.
-Always provide helpful choices, including a provisional assumption choice and an allowSkip flag.
-Never fabricate prices or quotes. Distinguish known facts from assumptions.
+Evaluate what is currently known, what assumptions have been made, and determine if enough high-impact information is known to draft celebration concepts.
+
+CRITICAL INSTRUCTIONS:
+1. Thoroughly parse and extract all constraints from the user's brief and input into "updatedBrief" and "whatTrellisKnows", including:
+   - title and eventType
+   - eventDate and dateFlexibility ("fixed" if specific date mentioned, "flexible", or "unknown")
+   - guestCount: { "target": <number> } if mentioned (e.g. "25 close friends" -> target: 25)
+   - totalBudgetMinorUnits: <number in cents> if mentioned (e.g. "$800" -> 80000)
+   - priorities: array of items like { "key": "indie jazz music", "weight": 4, "source": "user" }
+   - preferences: object with atmosphere, catering, music, etc. (e.g. atmosphere: "Intimate outdoor rooftop", food: "custom red velvet cake, mocktails")
+2. AVOID REDUNDANT QUESTIONS:
+   - If the guest count is ALREADY stated or known in the brief/input, DO NOT ask how many guests!
+   - If the atmosphere/vibe is ALREADY stated or known, DO NOT ask about atmosphere!
+   - If the user's input already provides key constraints (such as guest count, occasion, and basic vibe or budget), you SHOULD set "isReadyForDraft": true and "nextQuestion": null so the user can immediately review celebration concepts!
+3. Only if a truly critical decision constraint remains completely unknown, ask a single focused question.
 
 You MUST respond with valid JSON adhering to this exact format:
 {
@@ -202,11 +245,14 @@ You MUST respond with valid JSON adhering to this exact format:
   "updatedBrief": {
     "title": "${brief.title || 'Celebration'}",
     "eventType": "${brief.eventType}",
-    "dateFlexibility": "unknown",
+    "eventDate": "YYYY-MM-DD or readable date",
+    "dateFlexibility": "fixed",
     "timezone": "${brief.timezone || 'UTC'}",
     "currency": "${brief.currency || 'USD'}",
-    "priorities": [],
-    "preferences": {},
+    "guestCount": { "target": 25 },
+    "totalBudgetMinorUnits": 80000,
+    "priorities": [{ "key": "indie jazz music", "weight": 4, "source": "user" }],
+    "preferences": { "atmosphere": "Intimate outdoor rooftop" },
     "commitments": [],
     "unknowns": [],
     "assumptions": []
@@ -230,30 +276,75 @@ Generate the next adaptive discovery turn conforming strictly to the JSON schema
         DiscoveryTurnResponseSchema
       );
     } catch (err: any) {
-      if (err.code === 'SCHEMA_VALIDATION_ERROR') {
-        // Fallback: If Gemini returned a slightly non-conforming object, salvage its questions and facts
+      if (err.code === 'SCHEMA_VALIDATION_ERROR' || err.code === 'INVALID_MODEL_JSON') {
+        // Fallback: If model returned a slightly non-conforming object, salvage its questions and facts
         console.warn('Attempting graceful recovery from model schema mismatch...');
+        const inputLower = (userInput || '').toLowerCase();
+        const extractedBrief = { ...brief };
+
+        // Guest count extraction: e.g. "25 close friends" or "25 guests"
+        const guestMatch = inputLower.match(/(\d+)\s*(?:close\s*)?(?:friends|guests|people|attendees|pax)/);
+        if (guestMatch) {
+          extractedBrief.guestCount = { target: parseInt(guestMatch[1], 10) };
+        }
+
+        // Budget extraction: e.g. "$800"
+        const budgetMatch = inputLower.match(/\$?\s*(\d+(?:,\d{3})*)\s*(?:dollars|budget|\$)?/);
+        if (budgetMatch && !extractedBrief.totalBudgetMinorUnits) {
+          const val = parseInt(budgetMatch[1].replace(/,/g, ''), 10);
+          if (val > 0) extractedBrief.totalBudgetMinorUnits = val < 50000 ? val * 100 : val;
+        }
+
+        // Atmosphere extraction:
+        if (inputLower.includes('intimate') || inputLower.includes('rooftop') || inputLower.includes('relaxed') || inputLower.includes('lively')) {
+          extractedBrief.preferences = {
+            ...extractedBrief.preferences,
+            atmosphere: inputLower.includes('intimate') ? 'Intimate outdoor rooftop' : 'Fun & lively',
+          };
+        }
+
+        const whatKnows = [
+          `Celebration: ${extractedBrief.title || 'Special Celebration'}`,
+          ...(extractedBrief.guestCount?.target ? [`Guest count: ~${extractedBrief.guestCount.target} guests`] : []),
+          ...(extractedBrief.totalBudgetMinorUnits ? [`Budget: $${(extractedBrief.totalBudgetMinorUnits / 100).toLocaleString()}`] : []),
+          ...(extractedBrief.preferences?.atmosphere ? [`Atmosphere: ${extractedBrief.preferences.atmosphere}`] : []),
+        ];
+
+        const hasCoreInfo = Boolean(
+          extractedBrief.guestCount?.target &&
+          (extractedBrief.preferences?.atmosphere || extractedBrief.totalBudgetMinorUnits)
+        );
+
         result = {
           intent: 'Celebrate with friends and family',
-          whatTrellisKnows: userInput ? [userInput] : ['Initial celebration brief started'],
-          assumptionsMade: ['Provisional date and guest count will be refined during intake'],
-          isReadyForDraft: false,
-          nextQuestion: {
-            id: 'q_guest_count',
-            prompt: 'How many guests are you expecting to invite to this celebration?',
-            explanation: 'Guest count anchors the atmosphere, venue size, and catering budget.',
+          whatTrellisKnows: whatKnows.length > 1 ? whatKnows : (userInput ? [userInput] : ['Initial celebration brief started']),
+          assumptionsMade: ['Provisional date and details will be refined during planning'],
+          isReadyForDraft: hasCoreInfo,
+          nextQuestion: hasCoreInfo ? null : {
+            id: extractedBrief.guestCount?.target ? 'q_atmosphere' : 'q_guest_count',
+            prompt: extractedBrief.guestCount?.target
+              ? "What kind of atmosphere or vibe are you envisioning for this celebration?"
+              : "How many guests are you expecting to invite to this celebration?",
+            explanation: 'Helps curate venue style and catering proportions.',
             impactDimension: 'guest_experience',
             inputType: 'single_choice',
-            options: [
-              { id: 'opt_intimate', label: 'Intimate gathering (10–25 guests)', isProvisionalAssumption: false },
-              { id: 'opt_medium', label: 'Medium celebration (25–60 guests)', isProvisionalAssumption: false },
-              { id: 'opt_large', label: 'Grand party (60–150+ guests)', isProvisionalAssumption: false },
-              { id: 'opt_assume_30', label: 'Assume ~30 guests for now (provisional)', isProvisionalAssumption: true },
-            ],
+            options: extractedBrief.guestCount?.target
+              ? [
+                  { id: 'opt_relaxed', label: 'Casual & Relaxed', isProvisionalAssumption: false },
+                  { id: 'opt_sophisticated', label: 'Elegant & Sophisticated', isProvisionalAssumption: false },
+                  { id: 'opt_lively', label: 'Fun & Lively', isProvisionalAssumption: false },
+                  { id: 'opt_assume_relaxed', label: 'Assume a balanced, adaptable atmosphere for now', isProvisionalAssumption: true },
+                ]
+              : [
+                  { id: 'opt_intimate', label: 'Intimate gathering (10–25 guests)', isProvisionalAssumption: false },
+                  { id: 'opt_medium', label: 'Medium celebration (25–60 guests)', isProvisionalAssumption: false },
+                  { id: 'opt_large', label: 'Grand party (60–150+ guests)', isProvisionalAssumption: false },
+                  { id: 'opt_assume_30', label: 'Assume ~25 guests for now (provisional)', isProvisionalAssumption: true },
+                ],
             allowSkip: true,
             allowNotSure: true,
           },
-          updatedBrief: brief,
+          updatedBrief: extractedBrief,
         };
       } else {
         throw err;

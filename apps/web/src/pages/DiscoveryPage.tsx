@@ -90,11 +90,36 @@ export const DiscoveryPage: React.FC = () => {
       return;
     }
 
+    const noteLower = (initialNote || '').toLowerCase();
+    const guestMatch = noteLower.match(/(\d+)\s*(?:close\s*)?(?:friends|guests|people|attendees|pax)/);
+    const budgetMatch = noteLower.match(/\$?\s*(\d+(?:,\d{3})*)\s*(?:dollars|budget|\$)?/);
+
+    let extractedGuestCount = brief.guestCount;
+    if (guestMatch && guestMatch[1]) {
+      extractedGuestCount = { target: parseInt(guestMatch[1], 10) };
+    }
+
+    let extractedBudget = brief.totalBudgetMinorUnits;
+    if (budgetMatch && budgetMatch[1] && !extractedBudget) {
+      const parsedNum = parseInt(budgetMatch[1].replace(/,/g, ''), 10);
+      if (parsedNum > 0) extractedBudget = parsedNum < 50000 ? parsedNum * 100 : parsedNum;
+    }
+
+    const prePreferences = { ...brief.preferences };
+    if (noteLower.includes('rooftop') || noteLower.includes('intimate') || noteLower.includes('relaxed') || noteLower.includes('vibrant')) {
+      prePreferences.atmosphere = noteLower.includes('intimate')
+        ? 'Intimate outdoor rooftop'
+        : 'Festive & convivial';
+    }
+
     const updatedBrief: EventBrief = {
       ...brief,
       title: title.trim(),
       eventType,
       customTypeLabel: eventType === 'custom' ? customTypeLabel : undefined,
+      guestCount: extractedGuestCount,
+      totalBudgetMinorUnits: extractedBudget,
+      preferences: prePreferences,
     };
     setBrief(updatedBrief);
     setIsLoadingTurn(true);
@@ -105,11 +130,13 @@ export const DiscoveryPage: React.FC = () => {
         userInput: initialNote || undefined,
       });
 
+      const nextBrief = res.updatedBrief ? { ...updatedBrief, ...res.updatedBrief } : updatedBrief;
+      setBrief(nextBrief);
       setWhatTrellisKnows(res.whatTrellisKnows || []);
       setAssumptions(res.assumptionsMade || []);
 
       if (res.isReadyForDraft) {
-        await loadConcepts(res.updatedBrief || updatedBrief);
+        await loadConcepts(nextBrief);
       } else if (res.nextQuestion) {
         setCurrentQuestion(res.nextQuestion);
         setStep('questions');
@@ -134,25 +161,43 @@ export const DiscoveryPage: React.FC = () => {
       responseSummary = 'Skipped for now (keep as unknown)';
     }
 
-    // Update local brief preferences based on question
     const updatedPreferences = { ...brief.preferences };
     const updatedBrief: EventBrief = { ...brief, preferences: updatedPreferences };
 
-    if (currentQuestion.id === 'q_guest_count') {
-      if (selectedOptionId === 'opt_intimate') updatedBrief.guestCount = { target: 25 };
-      else if (selectedOptionId === 'opt_medium') updatedBrief.guestCount = { target: 75 };
-      else if (selectedOptionId === 'opt_large') updatedBrief.guestCount = { target: 150 };
-      else if (selectedOptionId === 'opt_assume_50' || isProvisional) {
-        updatedBrief.guestCount = { target: 60 };
-        updatedBrief.assumptions = [...(updatedBrief.assumptions || []), 'Provisional guest count: 60'];
+    const lowerPrompt = currentQuestion.prompt.toLowerCase();
+    const lowerAnswer = (responseSummary || '').toLowerCase();
+
+    // Check if answering guest count question
+    if (
+      currentQuestion.id.includes('guest') ||
+      lowerPrompt.includes('how many guests') ||
+      lowerPrompt.includes('guest count')
+    ) {
+      const rangeMatch = lowerAnswer.match(/(\d+)\s*[-–to]+\s*(\d+)/);
+      const singleMatch = lowerAnswer.match(/(\d+)/);
+      if (rangeMatch && rangeMatch[1] && rangeMatch[2]) {
+        const mid = Math.round((parseInt(rangeMatch[1], 10) + parseInt(rangeMatch[2], 10)) / 2);
+        updatedBrief.guestCount = { target: mid };
+      } else if (singleMatch && singleMatch[1]) {
+        updatedBrief.guestCount = { target: parseInt(singleMatch[1], 10) };
+      } else if (isProvisional) {
+        updatedBrief.guestCount = { target: 25 };
       }
-    } else if (currentQuestion.id === 'q_atmosphere') {
-      if (selectedOptionId === 'opt_relaxed') updatedPreferences.atmosphere = 'Relaxed & convivial';
-      else if (selectedOptionId === 'opt_vibrant') updatedPreferences.atmosphere = 'Vibrant & energetic';
-      else if (selectedOptionId === 'opt_editorial') updatedPreferences.atmosphere = 'Refined & intimate';
-      else if (isProvisional) {
-        updatedPreferences.atmosphere = 'Relaxed & convivial (provisional)';
-      }
+    } else if (
+      currentQuestion.id.includes('atmosphere') ||
+      lowerPrompt.includes('atmosphere') ||
+      lowerPrompt.includes('vibe')
+    ) {
+      updatedPreferences.atmosphere = responseSummary;
+    } else {
+      updatedPreferences[currentQuestion.id] = responseSummary;
+    }
+
+    if (isProvisional) {
+      updatedBrief.assumptions = [
+        ...(updatedBrief.assumptions || []),
+        `Provisional: ${responseSummary}`,
+      ];
     }
 
     setBrief(updatedBrief);
@@ -166,11 +211,13 @@ export const DiscoveryPage: React.FC = () => {
         userInput: responseSummary,
       });
 
+      const nextBrief = res.updatedBrief ? { ...updatedBrief, ...res.updatedBrief } : updatedBrief;
+      setBrief(nextBrief);
       setWhatTrellisKnows(res.whatTrellisKnows || []);
       setAssumptions(res.assumptionsMade || []);
 
       if (res.isReadyForDraft) {
-        await loadConcepts(res.updatedBrief || updatedBrief);
+        await loadConcepts(nextBrief);
       } else if (res.nextQuestion) {
         setCurrentQuestion(res.nextQuestion);
       }

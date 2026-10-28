@@ -49,11 +49,16 @@ export type EffortLevel = z.infer<typeof EffortLevelSchema>;
 // Event Brief & Inferred State
 // =============================================================================
 
-export const PriorityItemSchema = z.object({
+export const PriorityItemSchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    return { key: val, weight: 3, source: 'user' };
+  }
+  return val;
+}, z.object({
   key: z.string(),
   weight: z.number().min(1).max(5).default(3),
   source: z.enum(['user', 'inferred_pending_confirmation']).default('user'),
-});
+}));
 export type PriorityItem = z.infer<typeof PriorityItemSchema>;
 
 export const CommitmentItemSchema = z.object({
@@ -72,11 +77,20 @@ export const LocationBriefSchema = z.object({
 });
 export type LocationBrief = z.infer<typeof LocationBriefSchema>;
 
-export const GuestCountBriefSchema = z.object({
+export const GuestCountBriefSchema = z.preprocess((val) => {
+  if (typeof val === 'number') {
+    return { target: val };
+  }
+  if (typeof val === 'string') {
+    const num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(num)) return { target: num };
+  }
+  return val;
+}, z.object({
   minimum: z.number().int().nonnegative().optional(),
   target: z.number().int().positive().optional(),
   maximum: z.number().int().positive().optional(),
-});
+}));
 export type GuestCountBrief = z.infer<typeof GuestCountBriefSchema>;
 
 export const EventBriefSchema = z.object({
@@ -84,13 +98,35 @@ export const EventBriefSchema = z.object({
   eventType: EventTypeSchema,
   customTypeLabel: z.string().optional(),
   eventDate: z.string().optional(),
-  dateFlexibility: z.enum(['fixed', 'flexible', 'unknown']).default('unknown'),
+  dateFlexibility: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      const lower = val.toLowerCase().trim();
+      if (lower.includes('fix') || lower.includes('exact') || lower.includes('specific')) return 'fixed';
+      if (lower.includes('flex')) return 'flexible';
+      if (lower.includes('unk')) return 'unknown';
+    }
+    return val;
+  }, z.enum(['fixed', 'flexible', 'unknown']).default('unknown')),
   timezone: z.string().default('UTC'),
   location: LocationBriefSchema.optional(),
   guestCount: GuestCountBriefSchema.optional(),
   currency: z.string().default('USD'),
-  totalBudgetMinorUnits: z.number().int().nonnegative().optional(),
-  priorities: z.array(PriorityItemSchema).default([]),
+  totalBudgetMinorUnits: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      const parsed = parseInt(val.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(parsed)) return parsed < 10000 ? parsed * 100 : parsed;
+    }
+    if (typeof val === 'number' && val > 0 && val < 50000) {
+      return val * 100;
+    }
+    return val;
+  }, z.number().int().nonnegative().optional()),
+  priorities: z.preprocess((val) => {
+    if (Array.isArray(val)) {
+      return val.map((item) => (typeof item === 'string' ? { key: item, weight: 3, source: 'user' } : item));
+    }
+    return val;
+  }, z.array(PriorityItemSchema).default([])),
   preferences: z.record(z.unknown()).default({}),
   commitments: z.array(CommitmentItemSchema).default([]),
   unknowns: z.array(z.string()).default([]),
@@ -275,12 +311,21 @@ export type VersionRecord = z.infer<typeof VersionRecordSchema>;
 // AI Discovery & Planner Flow Types
 // =============================================================================
 
-export const AdaptiveQuestionOptionSchema = z.object({
+export const AdaptiveQuestionOptionSchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    return {
+      id: `opt_${val.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 24)}`,
+      label: val,
+      isProvisionalAssumption: false,
+    };
+  }
+  return val;
+}, z.object({
   id: z.string(),
   label: z.string(),
   description: z.string().optional(),
   isProvisionalAssumption: z.boolean().default(false),
-});
+}));
 export type AdaptiveQuestionOption = z.infer<typeof AdaptiveQuestionOptionSchema>;
 
 export const AdaptiveQuestionSchema = z.object({
