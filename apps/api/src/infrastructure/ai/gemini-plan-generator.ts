@@ -8,6 +8,11 @@ import {
   ProposedOperationSchema,
   DiscoveryTurnResponse,
   DiscoveryTurnResponseSchema,
+  TaskStatusSchema,
+  VendorAvailabilityStatusSchema,
+  VendorStageSchema,
+  EffortLevelSchema,
+  ProvenanceKindSchema,
 } from '@trellis/contracts';
 import { PlanGenerator, GeneratedPlanOutput } from './plan-generator.interface';
 import { EventAggregateWithItems } from '../../domain/ports';
@@ -86,8 +91,8 @@ export class GeminiPlanGenerator implements PlanGenerator {
       throw new AppError(502, 'INVALID_MODEL_JSON', 'Groq model output could not be parsed as JSON.');
     }
 
-    if (parsed && typeof parsed === 'object' && parsed.updatedBrief) {
-      this.sanitizeBriefForSchema(parsed.updatedBrief);
+    if (parsed && typeof parsed === 'object') {
+      this.sanitizeOutputForSchema(parsed);
     }
 
     const validated = schema.safeParse(parsed);
@@ -97,6 +102,72 @@ export class GeminiPlanGenerator implements PlanGenerator {
     }
 
     return validated.data;
+  }
+
+  private sanitizeOutputForSchema(parsed: any) {
+    if (!parsed || typeof parsed !== 'object') return;
+    if (parsed.updatedBrief) {
+      this.sanitizeBriefForSchema(parsed.updatedBrief);
+    }
+    if (Array.isArray(parsed.concepts)) {
+      parsed.concepts.forEach((c: any) => {
+        if (c && typeof c === 'object') {
+          if (!Array.isArray(c.whyItFits)) c.whyItFits = [];
+          if (!Array.isArray(c.tradeoffs)) c.tradeoffs = [];
+          if (!Array.isArray(c.highlights)) c.highlights = [];
+          if (typeof c.estimatedBudgetMinorUnits === 'number') {
+            c.estimatedBudgetMinorUnits = Math.round(c.estimatedBudgetMinorUnits);
+          }
+        }
+      });
+    }
+    if (Array.isArray(parsed.ideas)) {
+      parsed.ideas.forEach((idea: any) => {
+        if (idea && typeof idea === 'object') {
+          if (!Array.isArray(idea.tradeoffs)) idea.tradeoffs = [];
+          if (!Array.isArray(idea.fitReasons)) idea.fitReasons = [];
+          if (!Array.isArray(idea.requiredTasks)) idea.requiredTasks = [];
+          if (!Array.isArray(idea.mediaAssets)) idea.mediaAssets = [];
+          if (typeof idea.costBasis !== 'string' || !idea.costBasis) idea.costBasis = 'AI estimate';
+          if (typeof idea.selected !== 'boolean') idea.selected = true;
+          if (typeof idea.locked !== 'boolean') idea.locked = false;
+        }
+      });
+    }
+    if (Array.isArray(parsed.tasks)) {
+      parsed.tasks.forEach((t: any) => {
+        if (t && typeof t === 'object') {
+          if (typeof t.purpose !== 'string') t.purpose = '';
+          if (!Array.isArray(t.dependencyIds)) t.dependencyIds = [];
+          if (!Array.isArray(t.linkedBudgetItemIds)) t.linkedBudgetItemIds = [];
+          if (!Array.isArray(t.linkedVendorIds)) t.linkedVendorIds = [];
+          if (typeof t.locked !== 'boolean') t.locked = false;
+        }
+      });
+    }
+    if (Array.isArray(parsed.budgetItems)) {
+      parsed.budgetItems.forEach((b: any) => {
+        if (b && typeof b === 'object') {
+          if (!Array.isArray(b.sourceEvidenceIds)) b.sourceEvidenceIds = [];
+          if (typeof b.locked !== 'boolean') b.locked = false;
+          if (typeof b.plannedMinorUnits === 'number') {
+            b.plannedMinorUnits = Math.round(b.plannedMinorUnits);
+          }
+          if (typeof b.estimateMinorUnits === 'number') {
+            b.estimateMinorUnits = Math.round(b.estimateMinorUnits);
+          }
+        }
+      });
+    }
+    if (Array.isArray(parsed.vendors)) {
+      parsed.vendors.forEach((v: any) => {
+        if (v && typeof v === 'object') {
+          if (!v.availabilityStatus) v.availabilityStatus = 'unknown';
+          if (!v.stage) v.stage = 'needed';
+          if (!v.provenance) v.provenance = 'needs_confirmation';
+        }
+      });
+    }
   }
 
   private sanitizeBriefForSchema(b: any) {
@@ -159,8 +230,8 @@ export class GeminiPlanGenerator implements PlanGenerator {
             throw new AppError(502, 'INVALID_MODEL_JSON', 'Model output could not be parsed as JSON.');
           }
 
-          if (parsed && typeof parsed === 'object' && parsed.updatedBrief) {
-            this.sanitizeBriefForSchema(parsed.updatedBrief);
+          if (parsed && typeof parsed === 'object') {
+            this.sanitizeOutputForSchema(parsed);
           }
 
           const validated = schema.safeParse(parsed);
@@ -500,7 +571,8 @@ You MUST respond with valid JSON strictly adhering to this structure:
       "description": "Gather songs that have defined important moments for the celebration.",
       "fitReasons": ["Adds emotional warmth"],
       "effortLevel": "low",
-      "costBasis": "$0 self-curated"
+      "costBasis": "$0 self-curated",
+      "tradeoffs": []
     }
   ]
 }`;
@@ -510,12 +582,12 @@ You MUST respond with valid JSON strictly adhering to this structure:
         z.object({
           id: z.string(),
           title: z.string(),
-          purpose: z.string(),
-          status: z.enum(['not_started', 'in_progress', 'blocked', 'done', 'not_applicable']),
+          purpose: z.string().default(''),
+          status: TaskStatusSchema.default('not_started'),
           dependencyIds: z.array(z.string()).default([]),
           linkedBudgetItemIds: z.array(z.string()).default([]),
           linkedVendorIds: z.array(z.string()).default([]),
-          provenance: z.enum(['ai_estimate', 'needs_confirmation']),
+          provenance: ProvenanceKindSchema.default('ai_estimate'),
           locked: z.boolean().default(false),
         })
       ),
@@ -525,8 +597,14 @@ You MUST respond with valid JSON strictly adhering to this structure:
           category: z.string(),
           label: z.string(),
           currency: z.string().default(brief.currency || 'USD'),
-          plannedMinorUnits: z.number().int().nonnegative(),
-          estimateMinorUnits: z.number().int().nonnegative().optional(),
+          plannedMinorUnits: z.preprocess(
+            (val) => (typeof val === 'number' ? Math.round(val) : 0),
+            z.number().int().nonnegative().default(0)
+          ),
+          estimateMinorUnits: z.preprocess(
+            (val) => (typeof val === 'number' ? Math.round(val) : undefined),
+            z.number().int().nonnegative().optional()
+          ),
           status: z.string().default('planned'),
           locked: z.boolean().default(false),
           sourceEvidenceIds: z.array(z.string()).default([]),
@@ -537,10 +615,10 @@ You MUST respond with valid JSON strictly adhering to this structure:
           id: z.string(),
           name: z.string(),
           category: z.string(),
-          availabilityStatus: z.enum(['unknown', 'verified_available', 'verified_unavailable']).default('unknown'),
-          stage: z.enum(['needed', 'researching', 'shortlisted', 'contacted', 'quote_received', 'booked', 'completed']).default('needed'),
+          availabilityStatus: VendorAvailabilityStatusSchema.default('unknown'),
+          stage: VendorStageSchema.default('needed'),
           userNotes: z.string().optional(),
-          provenance: z.enum(['needs_confirmation', 'ai_estimate']).default('needs_confirmation'),
+          provenance: ProvenanceKindSchema.default('needs_confirmation'),
         })
       ),
       ideas: z.array(
@@ -548,15 +626,15 @@ You MUST respond with valid JSON strictly adhering to this structure:
           id: z.string(),
           title: z.string(),
           description: z.string(),
-          fitReasons: z.array(z.string()),
-          effortLevel: z.enum(['low', 'medium', 'high']),
-          costBasis: z.string(),
-          tradeoffs: z.array(z.string()),
+          fitReasons: z.array(z.string()).default([]),
+          effortLevel: EffortLevelSchema.default('medium'),
+          costBasis: z.string().default('AI estimate'),
+          tradeoffs: z.array(z.string()).default([]),
           requiredTasks: z.array(z.string()).default([]),
           mediaAssets: z.array(z.string()).default([]),
           selected: z.boolean().default(true),
           locked: z.boolean().default(false),
-          provenance: z.enum(['ai_estimate']).default('ai_estimate'),
+          provenance: ProvenanceKindSchema.default('ai_estimate'),
         })
       ),
     });
@@ -566,6 +644,9 @@ You MUST respond with valid JSON strictly adhering to this structure:
     return {
       tasks: parsedPlan.tasks.map((t) => ({
         ...t,
+        purpose: t.purpose ?? '',
+        status: t.status ?? 'not_started',
+        provenance: t.provenance ?? 'ai_estimate',
         locked: t.locked ?? false,
         dependencyIds: t.dependencyIds ?? [],
         linkedBudgetItemIds: t.linkedBudgetItemIds ?? [],
@@ -586,6 +667,10 @@ You MUST respond with valid JSON strictly adhering to this structure:
       })),
       ideas: parsedPlan.ideas.map((i) => ({
         ...i,
+        fitReasons: i.fitReasons ?? [],
+        effortLevel: i.effortLevel ?? 'medium',
+        costBasis: i.costBasis ?? 'AI estimate',
+        tradeoffs: i.tradeoffs ?? [],
         requiredTasks: i.requiredTasks ?? [],
         mediaAssets: i.mediaAssets ?? [],
         selected: i.selected ?? true,
@@ -624,9 +709,9 @@ Base Version: ${currentPlan.event.currentVersion}`;
     const RevisionOutputSchema = z.object({
       requestedChange: z.string(),
       operations: z.array(ProposedOperationSchema),
-      affectedItems: z.array(z.object({ entity: z.string(), id: z.string(), impact: z.string() })),
-      assumptions: z.array(z.string()),
-      unresolvedQuestions: z.array(z.string()),
+      affectedItems: z.array(z.object({ entity: z.string(), id: z.string(), impact: z.string() })).default([]),
+      assumptions: z.array(z.string()).default([]),
+      unresolvedQuestions: z.array(z.string()).default([]),
     });
 
     const parsed = await this.generateStructuredJson(prompt, systemInstruction, RevisionOutputSchema);
@@ -640,9 +725,9 @@ Base Version: ${currentPlan.event.currentVersion}`;
         ...op,
         requiresApproval: op.requiresApproval ?? false,
       })),
-      affectedItems: parsed.affectedItems,
-      assumptions: parsed.assumptions,
-      unresolvedQuestions: parsed.unresolvedQuestions,
+      affectedItems: parsed.affectedItems ?? [],
+      assumptions: parsed.assumptions ?? [],
+      unresolvedQuestions: parsed.unresolvedQuestions ?? [],
       evidenceReferences: [],
       status: 'pending',
       createdBy: currentPlan.event.ownerId,
@@ -665,7 +750,7 @@ Item: "${itemLabel}" (Category: ${category || 'General'})`;
 
     const ExplanationSchema = z.object({
       explanation: z.string(),
-      citedPreferences: z.array(z.string()),
+      citedPreferences: z.array(z.string()).default([]),
     });
 
     return this.generateStructuredJson(prompt, systemInstruction, ExplanationSchema);

@@ -149,14 +149,17 @@ export type EventBrief = z.infer<typeof EventBriefSchema>;
 export const ConceptSchema = z.object({
   id: z.string(),
   title: z.string(),
-  tagline: z.string(),
-  description: z.string(),
-  whyItFits: z.array(z.string()),
-  effortLevel: EffortLevelSchema,
-  estimatedBudgetMinorUnits: z.number().int().nonnegative(),
-  costBasis: z.string(), // Clearly labelled estimate
-  tradeoffs: z.array(z.string()),
-  highlights: z.array(z.string()),
+  tagline: z.string().default(''),
+  description: z.string().default(''),
+  whyItFits: z.array(z.string()).default([]),
+  effortLevel: EffortLevelSchema.default('medium'),
+  estimatedBudgetMinorUnits: z.preprocess(
+    (val) => (typeof val === 'number' ? Math.round(val) : 0),
+    z.number().int().nonnegative().default(0)
+  ),
+  costBasis: z.string().default('Planning estimate'),
+  tradeoffs: z.array(z.string()).default([]),
+  highlights: z.array(z.string()).default([]),
   imageUrl: z.string().optional(),
 });
 export type Concept = z.infer<typeof ConceptSchema>;
