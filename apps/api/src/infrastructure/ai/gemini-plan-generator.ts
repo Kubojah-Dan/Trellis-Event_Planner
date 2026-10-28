@@ -284,13 +284,13 @@ Generate the next adaptive discovery turn conforming strictly to the JSON schema
 
         // Guest count extraction: e.g. "25 close friends" or "25 guests"
         const guestMatch = inputLower.match(/(\d+)\s*(?:close\s*)?(?:friends|guests|people|attendees|pax)/);
-        if (guestMatch) {
+        if (guestMatch && guestMatch[1]) {
           extractedBrief.guestCount = { target: parseInt(guestMatch[1], 10) };
         }
 
         // Budget extraction: e.g. "$800"
         const budgetMatch = inputLower.match(/\$?\s*(\d+(?:,\d{3})*)\s*(?:dollars|budget|\$)?/);
-        if (budgetMatch && !extractedBrief.totalBudgetMinorUnits) {
+        if (budgetMatch && budgetMatch[1] && !extractedBrief.totalBudgetMinorUnits) {
           const val = parseInt(budgetMatch[1].replace(/,/g, ''), 10);
           if (val > 0) extractedBrief.totalBudgetMinorUnits = val < 50000 ? val * 100 : val;
         }
