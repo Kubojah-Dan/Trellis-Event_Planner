@@ -17,16 +17,23 @@ import crypto from 'node:crypto';
 
 export class GeminiPlanGenerator implements PlanGenerator {
   private aiClient: GoogleGenAI | null = null;
+  private groqApiKey: string | null = null;
 
-  constructor(apiKey?: string | null) {
+  constructor(apiKey?: string | null, groqApiKey?: string | null) {
     const key = apiKey !== undefined ? (apiKey || undefined) : env.GEMINI_API_KEY;
     if (key && key !== 'safe_placeholder_for_local_env' && !key.includes('PLACEHOLDER')) {
       this.aiClient = new GoogleGenAI({ apiKey: key });
     }
+
+    if (groqApiKey !== undefined) {
+      this.groqApiKey = groqApiKey;
+    } else {
+      this.groqApiKey = env.GROQ_API_KEY || process.env.GROQ_API_KEY || null;
+    }
   }
 
   isConfigured(): boolean {
-    return this.aiClient !== null || Boolean(env.GROQ_API_KEY);
+    return this.aiClient !== null || Boolean(this.groqApiKey);
   }
 
   private async generateWithGroq<T>(
@@ -34,12 +41,12 @@ export class GeminiPlanGenerator implements PlanGenerator {
     systemInstruction: string,
     schema: z.ZodType<T, any, any>
   ): Promise<T> {
-    const apiKey = env.GROQ_API_KEY;
+    const apiKey = this.groqApiKey;
     if (!apiKey) {
       throw new AppError(503, 'AI_PROVIDER_UNAVAILABLE', 'Groq fallback is not configured (GROQ_API_KEY missing).');
     }
 
-    const model = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    const model = env.GROQ_MODEL || process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -136,8 +143,8 @@ export class GeminiPlanGenerator implements PlanGenerator {
       }
     }
 
-    // 2. Try Groq Fallback if GROQ_API_KEY is configured
-    if (env.GROQ_API_KEY) {
+    // 2. Try Groq Fallback if groqApiKey is configured
+    if (this.groqApiKey) {
       try {
         console.log('Using Groq fallback provider for structured JSON generation...');
         return await this.generateWithGroq(prompt, systemInstruction, schema);
@@ -148,11 +155,11 @@ export class GeminiPlanGenerator implements PlanGenerator {
     }
 
     // 3. Fallback exhausted or unconfigured
-    if (!this.aiClient && !env.GROQ_API_KEY) {
+    if (!this.aiClient && !this.groqApiKey) {
       throw new AppError(
         503,
         'AI_PROVIDER_UNAVAILABLE',
-        'Google Gemini API is not configured or GEMINI_API_KEY is missing. Please set GEMINI_API_KEY in the server environment to enable live AI planning.'
+        'Google Gemini API is not configured or GEMINI_API_KEY is missing. Please set GEMINI_API_KEY or GROQ_API_KEY in the server environment to enable live AI planning.'
       );
     }
 
@@ -625,9 +632,9 @@ Guidelines:
     }
 
     // 2. Try Groq fallback
-    if (env.GROQ_API_KEY) {
+    if (this.groqApiKey) {
       try {
-        const groqModel = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+        const groqModel = env.GROQ_MODEL || process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
         const groqMessages = [
           { role: 'system', content: systemInstruction },
           ...history.map((h) => ({ role: h.role, content: h.content })),
@@ -637,7 +644,7 @@ Guidelines:
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${env.GROQ_API_KEY}`,
+            Authorization: `Bearer ${this.groqApiKey}`,
           },
           body: JSON.stringify({
             model: groqModel,

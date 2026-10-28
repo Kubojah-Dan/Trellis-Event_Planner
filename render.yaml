@@ -20,6 +20,10 @@ services:
         sync: false
       - key: GEMINI_MODEL
         value: gemini-2.5-flash
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
       - key: GOOGLE_PLACES_API_KEY
         sync: false
       - key: UNSPLASH_ACCESS_KEY

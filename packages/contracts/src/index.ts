@@ -57,9 +57,9 @@ export const PriorityItemSchema = z.object({
 export type PriorityItem = z.infer<typeof PriorityItemSchema>;
 
 export const CommitmentItemSchema = z.object({
-  id: z.string(),
-  kind: z.string(),
-  description: z.string(),
+  id: z.string().default(() => `com_${Date.now()}`),
+  kind: z.string().default('general'),
+  description: z.string().default(''),
   locked: z.boolean().default(true),
 });
 export type CommitmentItem = z.infer<typeof CommitmentItemSchema>;
