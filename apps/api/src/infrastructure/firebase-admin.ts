@@ -72,6 +72,18 @@ export function getFirebaseAuth(): admin.auth.Auth {
   return getFirebaseAdminApp().auth();
 }
 
+let firestoreInstance: admin.firestore.Firestore | null = null;
+
 export function getFirestore(): admin.firestore.Firestore {
-  return getFirebaseAdminApp().firestore();
+  if (firestoreInstance) return firestoreInstance;
+
+  const app = getFirebaseAdminApp();
+  const db = app.firestore();
+  try {
+    db.settings({ ignoreUndefinedProperties: true });
+  } catch (err) {
+    // Settings might have already been initialized in the runtime
+  }
+  firestoreInstance = db;
+  return firestoreInstance;
 }

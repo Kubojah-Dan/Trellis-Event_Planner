@@ -42,7 +42,15 @@ export const VendorAvailabilityStatusSchema = z.enum([
 ]);
 export type VendorAvailabilityStatus = z.infer<typeof VendorAvailabilityStatusSchema>;
 
-export const EffortLevelSchema = z.enum(['low', 'medium', 'high']);
+export const EffortLevelSchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    const lower = val.toLowerCase().trim();
+    if (lower.includes('low')) return 'low';
+    if (lower.includes('high')) return 'high';
+    if (lower.includes('med') || lower.includes('moderat')) return 'medium';
+  }
+  return val;
+}, z.enum(['low', 'medium', 'high']));
 export type EffortLevel = z.infer<typeof EffortLevelSchema>;
 
 // =============================================================================

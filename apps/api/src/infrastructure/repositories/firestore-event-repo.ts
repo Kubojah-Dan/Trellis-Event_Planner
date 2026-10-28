@@ -11,6 +11,23 @@ import { EventRepository, EventAggregateWithItems } from '../../domain/ports';
 import { getFirestore } from '../firebase-admin';
 import { applyOperationsSafely } from '@trellis/domain';
 
+function stripUndefined<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(stripUndefined) as any;
+  }
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = stripUndefined(value);
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
 export class FirestoreEventRepository implements EventRepository {
   private get db() {
     return getFirestore();
@@ -19,7 +36,7 @@ export class FirestoreEventRepository implements EventRepository {
   async create(event: EventAggregate): Promise<EventAggregate> {
     const batch = this.db.batch();
     const eventRef = this.db.collection('events').doc(event.id);
-    batch.set(eventRef, event);
+    batch.set(eventRef, stripUndefined(event));
 
     const versionRef = eventRef.collection('versions').doc('v1');
     const initialVersion: VersionRecord = {
@@ -29,7 +46,7 @@ export class FirestoreEventRepository implements EventRepository {
       changeSource: 'initial_generation',
       createdAt: new Date().toISOString(),
     };
-    batch.set(versionRef, initialVersion);
+    batch.set(versionRef, stripUndefined(initialVersion));
 
     await batch.commit();
     return event;
@@ -80,7 +97,7 @@ export class FirestoreEventRepository implements EventRepository {
 
   async updateEvent(eventId: string, patch: Partial<EventAggregate>): Promise<EventAggregate> {
     const eventRef = this.db.collection('events').doc(eventId);
-    const updatedPatch = { ...patch, updatedAt: new Date().toISOString() };
+    const updatedPatch = stripUndefined({ ...patch, updatedAt: new Date().toISOString() });
     await eventRef.update(updatedPatch);
     const updated = await eventRef.get();
     return updated.data() as EventAggregate;
@@ -88,7 +105,7 @@ export class FirestoreEventRepository implements EventRepository {
 
   async saveTask(task: TaskItem): Promise<TaskItem> {
     const ref = this.db.collection('events').doc(task.eventId).collection('tasks').doc(task.id);
-    const updated = { ...task, updatedAt: new Date().toISOString() };
+    const updated = stripUndefined({ ...task, updatedAt: new Date().toISOString() });
     await ref.set(updated, { merge: true });
     return updated;
   }
@@ -103,7 +120,7 @@ export class FirestoreEventRepository implements EventRepository {
       .doc(item.eventId)
       .collection('budgetItems')
       .doc(item.id);
-    const updated = { ...item, updatedAt: new Date().toISOString() };
+    const updated = stripUndefined({ ...item, updatedAt: new Date().toISOString() });
     await ref.set(updated, { merge: true });
     return updated;
   }
@@ -123,7 +140,7 @@ export class FirestoreEventRepository implements EventRepository {
       .doc(vendor.eventId)
       .collection('vendors')
       .doc(vendor.id);
-    const updated = { ...vendor, updatedAt: new Date().toISOString() };
+    const updated = stripUndefined({ ...vendor, updatedAt: new Date().toISOString() });
     await ref.set(updated, { merge: true });
     return updated;
   }
@@ -134,7 +151,7 @@ export class FirestoreEventRepository implements EventRepository {
 
   async saveIdeaItem(idea: IdeaItem): Promise<IdeaItem> {
     const ref = this.db.collection('events').doc(idea.eventId).collection('ideas').doc(idea.id);
-    const updated = { ...idea, updatedAt: new Date().toISOString() };
+    const updated = stripUndefined({ ...idea, updatedAt: new Date().toISOString() });
     await ref.set(updated, { merge: true });
     return updated;
   }
@@ -149,7 +166,7 @@ export class FirestoreEventRepository implements EventRepository {
       .doc(proposal.eventId)
       .collection('proposals')
       .doc(proposal.id);
-    await ref.set(proposal);
+    await ref.set(stripUndefined(proposal));
     return proposal;
   }
 

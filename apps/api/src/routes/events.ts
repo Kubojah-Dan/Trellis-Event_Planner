@@ -62,7 +62,7 @@ export function createEventsRouter(repository: EventRepository) {
       const initialBrief = body.brief || {
         title: body.title,
         eventType: body.eventType,
-        eventDate: body.eventDate,
+        ...(body.eventDate ? { eventDate: body.eventDate } : {}),
         timezone: body.timezone,
         currency: body.currency,
         dateFlexibility: 'unknown',
@@ -79,7 +79,7 @@ export function createEventsRouter(repository: EventRepository) {
         title: body.title,
         eventType: body.eventType,
         status: 'planning',
-        eventDate: body.eventDate,
+        ...(body.eventDate ? { eventDate: body.eventDate } : {}),
         timezone: body.timezone,
         currency: body.currency,
         brief: initialBrief,
