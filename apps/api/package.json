@@ -5,7 +5,7 @@
   "main": "./dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "tsup",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -28,6 +28,7 @@
     "@types/node": "^22.13.0",
     "@types/supertest": "^6.0.2",
     "supertest": "^7.0.0",
+    "tsup": "^9.0.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }
