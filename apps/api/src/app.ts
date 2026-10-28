@@ -9,6 +9,7 @@ import { createEventsRouter } from './routes/events';
 import { EventRepository } from './domain/ports';
 import { InMemoryEventRepository } from './infrastructure/repositories/in-memory-event-repo';
 import { FirestoreEventRepository } from './infrastructure/repositories/firestore-event-repo';
+import { hasFirebaseCredentials } from './infrastructure/firebase-admin';
 
 import { createAiRouter } from './routes/ai';
 import { PlanGenerator } from './infrastructure/ai/plan-generator.interface';
@@ -71,7 +72,12 @@ export function createApp(customRepository?: EventRepository, customPlanGenerato
   let repository: EventRepository;
   if (customRepository) {
     repository = customRepository;
-  } else if (env.NODE_ENV === 'test' || env.USE_IN_MEMORY_REPO) {
+  } else if (env.NODE_ENV === 'test' || env.USE_IN_MEMORY_REPO || !hasFirebaseCredentials()) {
+    if (!hasFirebaseCredentials() && !env.USE_IN_MEMORY_REPO && env.NODE_ENV !== 'test') {
+      console.warn(
+        '[Trellis API] No Firebase credentials found. Falling back to in-memory event repository. Set FIREBASE_SERVICE_ACCOUNT_KEY in your environment to enable persistent Firestore storage.'
+      );
+    }
     repository = new InMemoryEventRepository();
   } else {
     repository = new FirestoreEventRepository();

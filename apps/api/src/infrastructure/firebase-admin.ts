@@ -7,7 +7,7 @@ import path from 'node:path';
 let appInstance: admin.app.App | null = null;
 
 function resolveCredential(): admin.credential.Credential | undefined {
-  // 1. Check FIREBASE_SERVICE_ACCOUNT_KEY env var (raw JSON string or file path)
+  // 1. Check FIREBASE_SERVICE_ACCOUNT_KEY env var (raw JSON string, base64, or file path)
   if (env.FIREBASE_SERVICE_ACCOUNT_KEY) {
     try {
       const val = env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
@@ -17,6 +17,13 @@ function resolveCredential(): admin.credential.Credential | undefined {
       if (fs.existsSync(val)) {
         return admin.credential.cert(JSON.parse(fs.readFileSync(val, 'utf8')));
       }
+      // Try base64 decoded JSON string
+      try {
+        const decoded = Buffer.from(val, 'base64').toString('utf8');
+        if (decoded.trim().startsWith('{')) {
+          return admin.credential.cert(JSON.parse(decoded));
+        }
+      } catch (_) {}
     } catch (e) {
       console.warn('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', e);
     }
@@ -41,6 +48,11 @@ function resolveCredential(): admin.credential.Credential | undefined {
   }
 
   return undefined;
+}
+
+export function hasFirebaseCredentials(): boolean {
+  if (env.USE_FIREBASE_EMULATOR) return true;
+  return resolveCredential() !== undefined || Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 }
 
 export function getFirebaseAdminApp(): admin.app.App {

@@ -16,6 +16,10 @@ services:
         value: trellis-planner-prod
       - key: USE_FIREBASE_EMULATOR
         value: false
+      - key: USE_IN_MEMORY_REPO
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_KEY
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
