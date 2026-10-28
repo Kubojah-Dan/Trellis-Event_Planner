@@ -21,24 +21,45 @@ export function createApp(customRepository?: EventRepository, customPlanGenerato
   const app = express();
 
   // Security headers & CORS
-  app.use(helmet());
   app.use(
-    cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
-        if (!origin) return callback(null, true);
-        if (
-          origin === env.CORS_ORIGIN ||
-          origin.startsWith('http://localhost:') ||
-          origin.startsWith('http://127.0.0.1:')
-        ) {
-          return callback(null, true);
-        }
-        callback(new Error(`Origin ${origin} not allowed by Trellis CORS policy.`));
-      },
-      credentials: true,
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     })
   );
+
+  const configuredOrigins = (env.CORS_ORIGIN || '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+
+  const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) return callback(null, true);
+
+      const cleanOrigin = origin.replace(/\/$/, '');
+      const isAllowed =
+        configuredOrigins.includes(cleanOrigin) ||
+        configuredOrigins.includes('*') ||
+        cleanOrigin === 'https://trellis-event-planner.vercel.app' ||
+        cleanOrigin.endsWith('.vercel.app') ||
+        cleanOrigin.startsWith('http://localhost:') ||
+        cleanOrigin.startsWith('http://127.0.0.1:');
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-Id'],
+    optionsSuccessStatus: 204,
+  };
+
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
 
   // Body parsing with strict 1MB limit to protect against DoS
   app.use(express.json({ limit: '1mb' }));

@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 8080
       - key: CORS_ORIGIN
-        sync: false
+        value: https://trellis-event-planner.vercel.app
       - key: FIREBASE_PROJECT_ID
         value: trellis-planner-prod
       - key: USE_FIREBASE_EMULATOR
