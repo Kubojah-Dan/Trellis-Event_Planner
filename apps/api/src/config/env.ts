@@ -23,6 +23,11 @@ const EnvSchema = z.object({
     .transform((v) => v === 'true' || v === '1'),
   FIRESTORE_EMULATOR_HOST: z.string().optional(),
   FIREBASE_AUTH_EMULATOR_HOST: z.string().optional(),
+  USE_IN_MEMORY_REPO: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true' || v === '1'),
+  FIREBASE_SERVICE_ACCOUNT_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
   GROQ_API_KEY: z.string().optional(),

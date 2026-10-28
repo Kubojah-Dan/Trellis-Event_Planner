@@ -50,7 +50,7 @@ export function createApp(customRepository?: EventRepository, customPlanGenerato
   let repository: EventRepository;
   if (customRepository) {
     repository = customRepository;
-  } else if (env.NODE_ENV === 'test') {
+  } else if (env.NODE_ENV === 'test' || env.USE_IN_MEMORY_REPO) {
     repository = new InMemoryEventRepository();
   } else {
     repository = new FirestoreEventRepository();

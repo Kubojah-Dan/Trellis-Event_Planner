@@ -16,6 +16,7 @@ coverage/
 *.key
 *.cert
 service-account*.json
+serviceAccountKey*.json
 firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*
