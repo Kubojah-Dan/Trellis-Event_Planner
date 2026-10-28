@@ -372,3 +372,18 @@ export const ApiErrorSchema = z.object({
   requestId: z.string().optional(),
 });
 export type ApiError = z.infer<typeof ApiErrorSchema>;
+
+// =============================================================================
+// User Notification Preferences
+// =============================================================================
+
+export const NotificationPreferencesSchema = z.object({
+  emailNotificationsEnabled: z.boolean().default(true),
+  recipientEmail: z.string().email().optional(),
+  notifyOnPlanCreated: z.boolean().default(true),
+  notifyOnTaskCompleted: z.boolean().default(true),
+  notifyOnEventDayReminder: z.boolean().default(true),
+  notifyOnRevisions: z.boolean().default(true),
+});
+export type NotificationPreferences = z.infer<typeof NotificationPreferencesSchema>;
+

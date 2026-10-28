@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   User as FirebaseUser,
   onAuthStateChanged,
@@ -22,6 +24,8 @@ export interface UserProfile {
 
 export type AuthModalMode = 'login' | 'signup' | 'forgot';
 
+export const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
@@ -29,7 +33,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (options?: { reason?: 'inactivity' | 'user'; silent?: boolean }) => Promise<void>;
   getIdToken: () => Promise<string | null>;
   // Auth modal management
   isAuthModalOpen: boolean;
@@ -136,13 +140,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signOut = async () => {
-    if (firebaseUser) {
-      await firebaseSignOut(auth);
+  const navigate = useNavigate();
+
+  const signOut = useCallback(
+    async (options?: { reason?: 'inactivity' | 'user'; silent?: boolean }) => {
+      try {
+        if (firebaseUser) {
+          await firebaseSignOut(auth);
+        }
+      } catch (err) {
+        console.warn('Firebase sign-out error:', err);
+      }
+      setDemoUser(null);
+      localStorage.removeItem('trellis_demo_user');
+      localStorage.removeItem('trellis_last_activity');
+
+      // Always navigate back to the landing page on sign out
+      navigate('/');
+
+      if (!options?.silent) {
+        if (options?.reason === 'inactivity') {
+          toast.info('You were logged out after 30 minutes of inactivity.', {
+            duration: 6000,
+          });
+        } else {
+          toast.success('Signed out successfully');
+        }
+      }
+    },
+    [firebaseUser, navigate]
+  );
+
+  // ---------------------------------------------------------------------------
+  // 30-minute user inactivity detection
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!activeUser) return;
+
+    const recordActivity = () => {
+      localStorage.setItem('trellis_last_activity', Date.now().toString());
+    };
+
+    // Ensure timestamp exists
+    if (!localStorage.getItem('trellis_last_activity')) {
+      recordActivity();
     }
-    setDemoUser(null);
-    localStorage.removeItem('trellis_demo_user');
-  };
+
+    // Throttle listener to record activity at most every 5 seconds
+    let lastThrottledTime = 0;
+    const handleActivity = () => {
+      const now = Date.now();
+      if (now - lastThrottledTime > 5000) {
+        lastThrottledTime = now;
+        recordActivity();
+      }
+    };
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach((ev) => window.addEventListener(ev, handleActivity, { passive: true }));
+
+    // Periodic check every 15 seconds to see if 30 minutes have elapsed
+    const checkInterval = setInterval(() => {
+      const lastStr = localStorage.getItem('trellis_last_activity');
+      const last = lastStr ? parseInt(lastStr, 10) : Date.now();
+      const now = Date.now();
+
+      if (now - last >= INACTIVITY_TIMEOUT_MS) {
+        signOut({ reason: 'inactivity' });
+      }
+    }, 15000);
+
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, handleActivity));
+      clearInterval(checkInterval);
+    };
+  }, [activeUser, signOut]);
 
   const openAuthModal = (mode: AuthModalMode = 'login') => {
     setAuthModalMode(mode);

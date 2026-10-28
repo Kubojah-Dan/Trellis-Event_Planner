@@ -6,10 +6,17 @@ import { requestIdMiddleware } from './middleware/request-id';
 import { errorHandler } from './middleware/error-handler';
 import { healthRouter } from './routes/health';
 import { createEventsRouter } from './routes/events';
+import { createNotificationsRouter } from './routes/notifications';
 import { EventRepository } from './domain/ports';
 import { InMemoryEventRepository } from './infrastructure/repositories/in-memory-event-repo';
 import { FirestoreEventRepository } from './infrastructure/repositories/firestore-event-repo';
 import { hasFirebaseCredentials } from './infrastructure/firebase-admin';
+import { EmailService } from './infrastructure/email/email-service';
+import {
+  UserPreferencesRepository,
+  InMemoryUserPreferencesRepository,
+  FirestoreUserPreferencesRepository,
+} from './infrastructure/repositories/user-preferences-repo';
 
 import { createAiRouter } from './routes/ai';
 import { PlanGenerator } from './infrastructure/ai/plan-generator.interface';
@@ -18,7 +25,12 @@ import { SimulatedPlanGenerator } from './infrastructure/ai/simulated-plan-gener
 
 import { createRateLimiter } from './middleware/rate-limit';
 
-export function createApp(customRepository?: EventRepository, customPlanGenerator?: PlanGenerator) {
+export function createApp(
+  customRepository?: EventRepository,
+  customPlanGenerator?: PlanGenerator,
+  customEmailService?: EmailService,
+  customPreferencesRepo?: UserPreferencesRepository
+) {
   const app = express();
 
   // Security headers & CORS
@@ -96,13 +108,25 @@ export function createApp(customRepository?: EventRepository, customPlanGenerato
     }
   }
 
+  // Email Service & User Preferences
+  const emailService = customEmailService || new EmailService();
+  let preferencesRepo: UserPreferencesRepository;
+  if (customPreferencesRepo) {
+    preferencesRepo = customPreferencesRepo;
+  } else if (env.NODE_ENV === 'test' || env.USE_IN_MEMORY_REPO || !hasFirebaseCredentials()) {
+    preferencesRepo = new InMemoryUserPreferencesRepository();
+  } else {
+    preferencesRepo = new FirestoreUserPreferencesRepository();
+  }
+
   // Routes
   app.use('/', healthRouter);
-  app.use('/api/events', createEventsRouter(repository));
+  app.use('/api/events', createEventsRouter(repository, emailService, preferencesRepo));
   app.use('/api/ai', createAiRouter(planGenerator, repository));
+  app.use('/api/notifications', createNotificationsRouter(emailService, preferencesRepo, repository));
 
   // Centralized Error Handling
   app.use(errorHandler);
 
-  return { app, repository, planGenerator };
+  return { app, repository, planGenerator, emailService, preferencesRepo };
 }

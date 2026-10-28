@@ -32,6 +32,9 @@ const EnvSchema = z.object({
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.string().default('openai/gpt-oss-120b'),
+  RESEND_API_KEY: z.string().optional(),
+  NOTIFICATION_EMAIL_FROM: z.string().default('Trellis Celebrations <onboarding@resend.dev>'),
+  APP_BASE_URL: z.string().default('https://trellis-event-planner.vercel.app'),
 });
 
 export type EnvConfig = z.infer<typeof EnvSchema>;

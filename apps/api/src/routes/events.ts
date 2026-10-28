@@ -15,12 +15,18 @@ import { EventRepository } from '../domain/ports';
 import { authMiddleware } from '../middleware/auth';
 import { createAclMiddleware } from '../middleware/acl';
 import { AppError } from '../middleware/error-handler';
+import { EmailService } from '../infrastructure/email/email-service';
+import { UserPreferencesRepository } from '../infrastructure/repositories/user-preferences-repo';
 
 function getParam(param: string | string[] | undefined): string {
   return Array.isArray(param) ? param[0] || '' : param || '';
 }
 
-export function createEventsRouter(repository: EventRepository) {
+export function createEventsRouter(
+  repository: EventRepository,
+  emailService?: EmailService,
+  preferencesRepo?: UserPreferencesRepository
+) {
   const router = Router();
   const acl = createAclMiddleware(repository);
 
@@ -89,6 +95,33 @@ export function createEventsRouter(repository: EventRepository) {
       };
 
       const created = await repository.create(newEvent);
+
+      if (emailService && preferencesRepo) {
+        (async () => {
+          try {
+            const prefs = await preferencesRepo.getPreferences(actorUid);
+            if (prefs.emailNotificationsEnabled && prefs.notifyOnPlanCreated) {
+              const targetEmail = prefs.recipientEmail || req.actor?.email;
+              if (targetEmail) {
+                const budgetStr = created.brief.totalBudgetMinorUnits
+                  ? `$${(created.brief.totalBudgetMinorUnits / 100).toLocaleString()}`
+                  : 'Planning estimate';
+                await emailService.sendPlanCreatedEmail(
+                  targetEmail,
+                  created.title,
+                  created.id,
+                  created.eventType,
+                  budgetStr,
+                  created.eventDate
+                );
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to send plan created email:', e);
+          }
+        })();
+      }
+
       res.status(201).json({ event: created });
     } catch (err) {
       next(err);
@@ -156,6 +189,34 @@ export function createEventsRouter(repository: EventRepository) {
       });
 
       const saved = await repository.saveTask(body);
+
+      if (saved.status === 'done' && emailService && preferencesRepo) {
+        (async () => {
+          try {
+            const actorUid = req.actor!.uid;
+            const prefs = await preferencesRepo.getPreferences(actorUid);
+            if (prefs.emailNotificationsEnabled && prefs.notifyOnTaskCompleted) {
+              const targetEmail = prefs.recipientEmail || req.actor?.email;
+              if (targetEmail) {
+                const aggregate = req.eventAggregate || (await repository.getById(eventId));
+                const total = aggregate?.tasks.length || 1;
+                const completed = aggregate?.tasks.filter((t) => t.status === 'done').length || 1;
+                await emailService.sendTaskCompletedEmail(
+                  targetEmail,
+                  aggregate?.event.title || 'Celebration',
+                  eventId,
+                  saved.title,
+                  completed,
+                  total
+                );
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to send task completed email:', e);
+          }
+        })();
+      }
+
       res.json({ task: saved });
     } catch (err) {
       next(err);

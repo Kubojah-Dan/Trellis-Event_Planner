@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ChevronDown, LogOut, User, Plus, Calendar } from 'lucide-react';
+import { ChevronDown, LogOut, User, Plus, Calendar, Bell } from 'lucide-react';
+import { NotificationSettingsModal } from '../notifications/NotificationSettingsModal';
 
 interface NavbarProps {
   currentEventTitle?: string;
@@ -11,6 +12,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ currentEventTitle, syncStatus = 'synced' }) => {
   const { user, signOut, openAuthModal } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -121,7 +123,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentEventTitle, syncStatus = 
                   <p className="text-ink-subtle truncate text-[11px]">{user.email || 'Signed in'}</p>
                 </div>
 
-                <div className="px-2 pt-2">
+                <div className="px-2 pt-2 space-y-1">
+                  <button
+                    id="btn-notifications-settings"
+                    onClick={() => {
+                      setIsNotificationsOpen(true);
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-bark hover:bg-bark/5 flex items-center space-x-2 font-medium transition-colors"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-moss" />
+                    <span>Email & Alerts</span>
+                  </button>
+
                   <button
                     id="btn-sign-out"
                     onClick={() => {
@@ -136,6 +150,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentEventTitle, syncStatus = 
                 </div>
               </div>
             )}
+
+            <NotificationSettingsModal
+              isOpen={isNotificationsOpen}
+              onClose={() => setIsNotificationsOpen(false)}
+            />
           </div>
         ) : (
           <div className="flex items-center gap-2">

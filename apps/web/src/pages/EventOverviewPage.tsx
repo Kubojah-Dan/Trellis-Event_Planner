@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
@@ -20,9 +20,12 @@ import {
   Lock,
   Layers,
   Users,
+  Bell,
 } from 'lucide-react';
+import { NotificationSettingsModal } from '../components/notifications/NotificationSettingsModal';
 
 export const EventOverviewPage: React.FC = () => {
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { eventId } = useParams<{ eventId: string }>();
   const { getIdToken } = useAuth();
   const navigate = useNavigate();
@@ -114,7 +117,15 @@ export const EventOverviewPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setIsNotificationsOpen(true)}
+              className="px-4 py-3 rounded-full border border-cream/20 bg-cream/10 hover:bg-cream/20 text-cream text-xs font-semibold flex items-center space-x-1.5 transition-all"
+            >
+              <Bell className="w-4 h-4 text-terra" />
+              <span>Email Alerts</span>
+            </button>
+
             <button
               onClick={() => navigate(`/events/${eventId}/revisions`)}
               className="btn-pill-terra text-xs px-5 py-3 flex items-center space-x-2"
@@ -128,6 +139,11 @@ export const EventOverviewPage: React.FC = () => {
         {/* Ambient background glow */}
         <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-terra/20 blur-3xl pointer-events-none" />
       </div>
+
+      <NotificationSettingsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+      />
 
       {/* Primary KPI & Health Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

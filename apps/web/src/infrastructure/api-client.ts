@@ -6,6 +6,7 @@ import {
   IdeaItem,
   ChangeProposal,
   EventBrief,
+  NotificationPreferences,
 } from '@trellis/contracts';
 import { DiffImpactSummary } from '@trellis/domain';
 
@@ -183,6 +184,31 @@ export function createApiClient(getIdToken: () => Promise<string | null>) {
       return request<T>(`/api/ai/${endpoint}`, {
         method: 'POST',
         body: JSON.stringify(body),
+      });
+    },
+
+    // Notification & Email Alerts
+    async getNotificationPreferences(): Promise<{ preferences: NotificationPreferences; emailServiceConfigured: boolean }> {
+      return request<{ preferences: NotificationPreferences; emailServiceConfigured: boolean }>('/api/notifications/preferences');
+    },
+
+    async updateNotificationPreferences(prefs: Partial<NotificationPreferences>): Promise<{ preferences: NotificationPreferences }> {
+      return request<{ preferences: NotificationPreferences }>('/api/notifications/preferences', {
+        method: 'PATCH',
+        body: JSON.stringify(prefs),
+      });
+    },
+
+    async sendTestNotificationEmail(recipientEmail?: string): Promise<{ success: boolean; recipient: string; simulated: boolean; error?: string }> {
+      return request<{ success: boolean; recipient: string; simulated: boolean; error?: string }>('/api/notifications/test', {
+        method: 'POST',
+        body: JSON.stringify({ recipientEmail }),
+      });
+    },
+
+    async checkEventReminders(): Promise<{ success: boolean; sentCount: number }> {
+      return request<{ success: boolean; sentCount: number }>('/api/notifications/check-reminders', {
+        method: 'POST',
       });
     },
   };
