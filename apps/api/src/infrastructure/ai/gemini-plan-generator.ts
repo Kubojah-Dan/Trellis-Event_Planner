@@ -104,10 +104,43 @@ export class GeminiPlanGenerator implements PlanGenerator {
     return validated.data;
   }
 
+  private stripNullsDeep(obj: any) {
+    if (!obj || typeof obj !== 'object') return;
+    for (const key of Object.keys(obj)) {
+      if (obj[key] === null) {
+        delete obj[key];
+      } else if (typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+        this.stripNullsDeep(obj[key]);
+      }
+    }
+  }
+
   private sanitizeOutputForSchema(parsed: any) {
     if (!parsed || typeof parsed !== 'object') return;
+    this.stripNullsDeep(parsed);
+
     if (parsed.updatedBrief) {
       this.sanitizeBriefForSchema(parsed.updatedBrief);
+    }
+    if (parsed.nextQuestion && typeof parsed.nextQuestion === 'object') {
+      if (!parsed.nextQuestion.prompt || typeof parsed.nextQuestion.prompt !== 'string') {
+        parsed.nextQuestion = null;
+      } else if (typeof parsed.nextQuestion.inputType === 'string') {
+        const lower = parsed.nextQuestion.inputType.toLowerCase().replace(/[^a-z]/g, '');
+        if (lower.includes('number') || lower.includes('digit') || lower.includes('count')) {
+          parsed.nextQuestion.inputType = 'number';
+        } else if (lower.includes('curr') || lower.includes('budget') || lower.includes('money') || lower.includes('cost')) {
+          parsed.nextQuestion.inputType = 'currency';
+        } else if (lower.includes('multi')) {
+          parsed.nextQuestion.inputType = 'multiple_choice';
+        } else if (lower.includes('choice') || lower.includes('select')) {
+          parsed.nextQuestion.inputType = 'single_choice';
+        } else if (lower.includes('date') || lower.includes('time')) {
+          parsed.nextQuestion.inputType = 'date';
+        } else if (!['single_choice', 'multiple_choice', 'text', 'currency', 'number', 'date'].includes(parsed.nextQuestion.inputType)) {
+          parsed.nextQuestion.inputType = 'text';
+        }
+      }
     }
     if (Array.isArray(parsed.concepts)) {
       parsed.concepts.forEach((c: any) => {
@@ -172,6 +205,13 @@ export class GeminiPlanGenerator implements PlanGenerator {
 
   private sanitizeBriefForSchema(b: any) {
     if (!b || typeof b !== 'object') return;
+    if (b.eventDate === null) delete b.eventDate;
+    if (b.guestCount === null) delete b.guestCount;
+    if (b.totalBudgetMinorUnits === null) delete b.totalBudgetMinorUnits;
+    if (b.location === null) delete b.location;
+    if (b.title === null) delete b.title;
+    if (b.customTypeLabel === null) delete b.customTypeLabel;
+
     if (typeof b.dateFlexibility === 'string') {
       const lower = b.dateFlexibility.toLowerCase();
       if (lower.includes('fix') || lower.includes('exact') || lower.includes('specific')) {
@@ -190,6 +230,16 @@ export class GeminiPlanGenerator implements PlanGenerator {
         typeof p === 'string' ? { key: p, weight: 3, source: 'user' } : p
       );
     }
+    if (Array.isArray(b.assumptions)) {
+      b.assumptions = b.assumptions.map((a: any) =>
+        typeof a === 'object' && a !== null ? a.text || a.assumption || JSON.stringify(a) : String(a)
+      );
+    }
+    if (Array.isArray(b.unknowns)) {
+      b.unknowns = b.unknowns.map((u: any) =>
+        typeof u === 'object' && u !== null ? u.text || u.unknown || JSON.stringify(u) : String(u)
+      );
+    }
     if (typeof b.totalBudgetMinorUnits === 'number' && b.totalBudgetMinorUnits > 0 && b.totalBudgetMinorUnits < 50000) {
       b.totalBudgetMinorUnits = b.totalBudgetMinorUnits * 100;
     }
@@ -204,46 +254,68 @@ export class GeminiPlanGenerator implements PlanGenerator {
 
     // 1. Try Google Gemini if configured
     if (this.aiClient) {
-      try {
-        const response = await this.aiClient.models.generateContent({
-          model: env.GEMINI_MODEL,
-          contents: prompt,
-          config: {
-            systemInstruction,
-            responseMimeType: 'application/json',
-            temperature: 0.2,
-          },
-        });
+      const primaryModel = env.GEMINI_MODEL;
+      const modelsToTry = [primaryModel];
+      if (primaryModel === 'gemini-2.5-flash') {
+        modelsToTry.push('gemini-2.0-flash', 'gemini-1.5-flash');
+      } else if (primaryModel !== 'gemini-1.5-flash') {
+        modelsToTry.push('gemini-1.5-flash');
+      }
 
-        const text = response.text || '';
-        if (text.trim()) {
-          let cleanedText = text.trim();
-          if (cleanedText.startsWith('```')) {
-            cleanedText = cleanedText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-          }
+      for (const modelCandidate of modelsToTry) {
+        try {
+          const response = await this.aiClient.models.generateContent({
+            model: modelCandidate,
+            contents: prompt,
+            config: {
+              systemInstruction,
+              responseMimeType: 'application/json',
+              temperature: 0.2,
+            },
+          });
 
-          let parsed: any;
-          try {
-            parsed = JSON.parse(cleanedText);
-          } catch (e) {
-            console.error('Gemini output was not valid JSON:', cleanedText);
-            throw new AppError(502, 'INVALID_MODEL_JSON', 'Model output could not be parsed as JSON.');
-          }
+          const text = response.text || '';
+          if (text.trim()) {
+            let cleanedText = text.trim();
+            if (cleanedText.startsWith('```')) {
+              cleanedText = cleanedText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+            }
 
-          if (parsed && typeof parsed === 'object') {
-            this.sanitizeOutputForSchema(parsed);
-          }
+            let parsed: any;
+            try {
+              parsed = JSON.parse(cleanedText);
+            } catch (e) {
+              console.error('Gemini output was not valid JSON:', cleanedText);
+              throw new AppError(502, 'INVALID_MODEL_JSON', 'Model output could not be parsed as JSON.');
+            }
 
-          const validated = schema.safeParse(parsed);
-          if (validated.success) {
-            return validated.data;
+            if (parsed && typeof parsed === 'object') {
+              this.sanitizeOutputForSchema(parsed);
+            }
+
+            const validated = schema.safeParse(parsed);
+            if (validated.success) {
+              return validated.data;
+            }
+            console.warn(`Gemini (${modelCandidate}) schema validation failed, attempting fallback...`, validated.error.issues);
+            lastError = new AppError(502, 'SCHEMA_VALIDATION_ERROR', 'Model output failed schema validation.', validated.error.issues);
           }
-          console.warn('Gemini schema validation failed, attempting Groq fallback if available...', validated.error.issues);
-          lastError = new AppError(502, 'SCHEMA_VALIDATION_ERROR', 'Model output failed schema validation.', validated.error.issues);
+        } catch (err: any) {
+          lastError = err;
+          const isCapacityError =
+            err?.status === 503 ||
+            err?.code === 503 ||
+            err?.message?.includes('high demand') ||
+            err?.message?.includes('UNAVAILABLE');
+
+          if (isCapacityError) {
+            console.warn(`Gemini model ${modelCandidate} is experiencing high demand (503). Trying alternative provider/model...`);
+            continue;
+          } else {
+            console.warn(`Gemini model call (${modelCandidate}) failed:`, err.message || err);
+            break;
+          }
         }
-      } catch (err: any) {
-        lastError = err;
-        console.warn('Gemini model call failed:', err.message || err);
       }
     }
 

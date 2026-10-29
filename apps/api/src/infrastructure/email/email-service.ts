@@ -182,7 +182,13 @@ export class EmailService {
 
       if (!res.ok) {
         const errBody = await res.text();
-        console.error('Resend API error:', res.status, errBody);
+        if (res.status === 403 && errBody.includes('testing emails')) {
+          console.warn(
+            `Resend sandbox notice: Recipient '${to}' is unverified. On the free tier without a custom domain, Resend only delivers to your registered account email. Note: ${errBody}`
+          );
+        } else {
+          console.error('Resend API error:', res.status, errBody);
+        }
         return { success: false, error: `Resend HTTP ${res.status}: ${errBody}` };
       }
 

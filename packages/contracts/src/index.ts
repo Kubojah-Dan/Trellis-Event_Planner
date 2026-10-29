@@ -86,6 +86,7 @@ export const LocationBriefSchema = z.object({
 export type LocationBrief = z.infer<typeof LocationBriefSchema>;
 
 export const GuestCountBriefSchema = z.preprocess((val) => {
+  if (val === null || val === undefined) return undefined;
   if (typeof val === 'number') {
     return { target: val };
   }
@@ -102,11 +103,12 @@ export const GuestCountBriefSchema = z.preprocess((val) => {
 export type GuestCountBrief = z.infer<typeof GuestCountBriefSchema>;
 
 export const EventBriefSchema = z.object({
-  title: z.string().optional(),
+  title: z.preprocess((v) => (v === null ? undefined : v), z.string().optional()),
   eventType: EventTypeSchema,
-  customTypeLabel: z.string().optional(),
-  eventDate: z.string().optional(),
+  customTypeLabel: z.preprocess((v) => (v === null ? undefined : v), z.string().optional()),
+  eventDate: z.preprocess((v) => (v === null ? undefined : v), z.string().optional()),
   dateFlexibility: z.preprocess((val) => {
+    if (val === null || val === undefined) return 'unknown';
     if (typeof val === 'string') {
       const lower = val.toLowerCase().trim();
       if (lower.includes('fix') || lower.includes('exact') || lower.includes('specific')) return 'fixed';
@@ -116,10 +118,11 @@ export const EventBriefSchema = z.object({
     return val;
   }, z.enum(['fixed', 'flexible', 'unknown']).default('unknown')),
   timezone: z.string().default('UTC'),
-  location: LocationBriefSchema.optional(),
-  guestCount: GuestCountBriefSchema.optional(),
+  location: z.preprocess((v) => (v === null ? undefined : v), LocationBriefSchema.optional()),
+  guestCount: z.preprocess((v) => (v === null ? undefined : v), GuestCountBriefSchema.optional()),
   currency: z.string().default('USD'),
   totalBudgetMinorUnits: z.preprocess((val) => {
+    if (val === null || val === undefined) return undefined;
     if (typeof val === 'string') {
       const parsed = parseInt(val.replace(/[^0-9]/g, ''), 10);
       if (!isNaN(parsed)) return parsed < 10000 ? parsed * 100 : parsed;
@@ -130,15 +133,23 @@ export const EventBriefSchema = z.object({
     return val;
   }, z.number().int().nonnegative().optional()),
   priorities: z.preprocess((val) => {
-    if (Array.isArray(val)) {
-      return val.map((item) => (typeof item === 'string' ? { key: item, weight: 3, source: 'user' } : item));
-    }
-    return val;
+    if (!val || !Array.isArray(val)) return [];
+    return val.map((item) => (typeof item === 'string' ? { key: item, weight: 3, source: 'user' } : item));
   }, z.array(PriorityItemSchema).default([])),
   preferences: z.record(z.unknown()).default({}),
   commitments: z.array(CommitmentItemSchema).default([]),
-  unknowns: z.array(z.string()).default([]),
-  assumptions: z.array(z.string()).default([]),
+  unknowns: z.preprocess((val) => {
+    if (!val || !Array.isArray(val)) return [];
+    return val.map((item) =>
+      typeof item === 'object' && item !== null ? (item as any).text || (item as any).unknown || JSON.stringify(item) : String(item)
+    );
+  }, z.array(z.string()).default([])),
+  assumptions: z.preprocess((val) => {
+    if (!val || !Array.isArray(val)) return [];
+    return val.map((item) =>
+      typeof item === 'object' && item !== null ? (item as any).text || (item as any).assumption || JSON.stringify(item) : String(item)
+    );
+  }, z.array(z.string()).default([])),
 });
 export type EventBrief = z.infer<typeof EventBriefSchema>;
 
@@ -344,7 +355,18 @@ export const AdaptiveQuestionSchema = z.object({
   prompt: z.string(),
   explanation: z.string().default('Helps calibrate your celebration plan'),
   impactDimension: z.string().default('guest_experience'),
-  inputType: z.enum(['single_choice', 'multiple_choice', 'text', 'currency', 'number', 'date']).default('single_choice'),
+  inputType: z.preprocess((val) => {
+    if (typeof val === 'string') {
+      const lower = val.toLowerCase().replace(/[^a-z]/g, '');
+      if (lower.includes('number') || lower.includes('digit') || lower.includes('count') || lower.includes('quantity')) return 'number';
+      if (lower.includes('curr') || lower.includes('budget') || lower.includes('money') || lower.includes('cost') || lower.includes('price')) return 'currency';
+      if (lower.includes('multi') || lower.includes('checkbox')) return 'multiple_choice';
+      if (lower.includes('choice') || lower.includes('select') || lower.includes('radio') || lower.includes('single')) return 'single_choice';
+      if (lower.includes('date') || lower.includes('time') || lower.includes('day')) return 'date';
+      if (lower.includes('text') || lower.includes('string')) return 'text';
+    }
+    return val;
+  }, z.enum(['single_choice', 'multiple_choice', 'text', 'currency', 'number', 'date']).default('single_choice')),
   options: z.array(AdaptiveQuestionOptionSchema).default([]),
   allowSkip: z.boolean().default(true),
   allowNotSure: z.boolean().default(true),
