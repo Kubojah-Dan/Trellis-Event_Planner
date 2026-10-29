@@ -28,6 +28,12 @@ services:
         sync: false
       - key: GROQ_MODEL
         value: openai/gpt-oss-120b
+      - key: RESEND_API_KEY
+        sync: false
+      - key: NOTIFICATION_EMAIL_FROM
+        value: Trellis Celebrations <onboarding@resend.dev>
+      - key: APP_BASE_URL
+        value: https://trellis-event-planner.vercel.app
       - key: GOOGLE_PLACES_API_KEY
         sync: false
       - key: UNSPLASH_ACCESS_KEY
