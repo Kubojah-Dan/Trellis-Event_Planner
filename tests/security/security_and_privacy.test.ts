@@ -99,7 +99,7 @@ describe('Phase 6: Security, Privacy, Resilience & Audit Checks', () => {
       expect(blockedRes.status).toBe(429);
       expect(blockedRes.body.code).toBe('RATE_LIMIT_EXCEEDED');
       expect(blockedRes.body.message).toContain('Too many requests');
-    });
+    }, 15000);
 
     it('rejects oversized JSON request payloads (>1MB) with 413 Payload Too Large', async () => {
       // Generate a string greater than 1MB

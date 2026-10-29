@@ -23,7 +23,9 @@ function resolveCredential(): admin.credential.Credential | undefined {
         if (decoded.trim().startsWith('{')) {
           return admin.credential.cert(JSON.parse(decoded));
         }
-      } catch (_) {}
+      } catch (_decodeErr) {
+        // Ignored: string is direct raw JSON rather than base64
+      }
     } catch (e) {
       console.warn('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', e);
     }
@@ -39,7 +41,7 @@ function resolveCredential(): admin.credential.Credential | undefined {
     if (fs.existsSync(candidate)) {
       try {
         const parsed = JSON.parse(fs.readFileSync(candidate, 'utf8'));
-        console.log(`[Firebase Admin] Loaded service account from ${candidate}`);
+        console.info(`[Firebase Admin] Loaded service account from ${candidate}`);
         return admin.credential.cert(parsed);
       } catch (e) {
         console.warn(`[Firebase Admin] Failed reading ${candidate}:`, e);
@@ -93,7 +95,7 @@ export function getFirestore(): admin.firestore.Firestore {
   const db = app.firestore();
   try {
     db.settings({ ignoreUndefinedProperties: true });
-  } catch (err) {
+  } catch (_err) {
     // Settings might have already been initialized in the runtime
   }
   firestoreInstance = db;

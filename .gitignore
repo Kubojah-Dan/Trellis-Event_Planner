@@ -34,5 +34,6 @@ Thumbs.db
 .turbo/
 playwright-report/
 test-results/
+*.tsbuildinfo
 ANTIGRAVITY_PROMPT.md
 DESIGN.md

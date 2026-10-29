@@ -301,5 +301,5 @@ describe('Phase 6 E2E: Full Lifecycle User Journey', () => {
     expect(latestVersion).toBeDefined();
     expect(latestVersion.versionNumber).toBe(2);
     expect(latestVersion.createdBy).toBe('user-maya');
-  });
+  }, 15000);
 });

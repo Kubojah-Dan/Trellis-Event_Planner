@@ -38,7 +38,7 @@ let activeTokenVerifier: TokenVerifier = {
         email: decoded.email,
         name: decoded.name,
       };
-    } catch (err: any) {
+    } catch (_err: any) {
       throw new AppError(401, 'INVALID_AUTH_TOKEN', 'The provided authentication token is invalid or expired.');
     }
   },

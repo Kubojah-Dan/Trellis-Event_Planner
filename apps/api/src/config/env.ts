@@ -42,7 +42,7 @@ export type EnvConfig = z.infer<typeof EnvSchema>;
 let parsedEnv: EnvConfig;
 try {
   parsedEnv = EnvSchema.parse(process.env);
-} catch (error) {
+} catch (_error) {
   // If parsing fails, fall back to safe defaults for testing
   parsedEnv = EnvSchema.parse({});
 }

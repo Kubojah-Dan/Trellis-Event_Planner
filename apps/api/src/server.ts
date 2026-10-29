@@ -4,7 +4,7 @@ import { env } from './config/env';
 const { app, emailService } = createApp();
 
 app.listen(env.PORT, () => {
-  console.log(
+  console.info(
     JSON.stringify({
       level: 'info',
       message: `Trellis API server listening on port ${env.PORT}`,

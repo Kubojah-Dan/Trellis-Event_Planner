@@ -79,7 +79,9 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch {}
+        } catch (_err) {
+          // Ignored: cleanup on unmount
+        }
       }
     };
   }, [options.continuous, options.lang, options.onResult]);
@@ -92,12 +94,14 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
     }
     try {
       recognitionRef.current.start();
-    } catch (e: any) {
+    } catch (_err: any) {
       // If already started, stop then restart
       try {
         recognitionRef.current.stop();
         setTimeout(() => recognitionRef.current?.start(), 150);
-      } catch {}
+      } catch (_stopErr) {
+        // Ignored: already stopped
+      }
     }
   }, []);
 
@@ -105,7 +109,9 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
-      } catch {}
+      } catch (_err) {
+        // Ignored: already stopped
+      }
     }
     setIsListening(false);
   }, []);

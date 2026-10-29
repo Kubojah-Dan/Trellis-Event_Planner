@@ -87,7 +87,7 @@ export class GeminiPlanGenerator implements PlanGenerator {
     let parsed: any;
     try {
       parsed = JSON.parse(cleanedText);
-    } catch (e) {
+    } catch (_e) {
       throw new AppError(502, 'INVALID_MODEL_JSON', 'Groq model output could not be parsed as JSON.');
     }
 
@@ -284,7 +284,7 @@ export class GeminiPlanGenerator implements PlanGenerator {
             let parsed: any;
             try {
               parsed = JSON.parse(cleanedText);
-            } catch (e) {
+            } catch (_e) {
               console.error('Gemini output was not valid JSON:', cleanedText);
               throw new AppError(502, 'INVALID_MODEL_JSON', 'Model output could not be parsed as JSON.');
             }
@@ -322,7 +322,7 @@ export class GeminiPlanGenerator implements PlanGenerator {
     // 2. Try Groq Fallback if groqApiKey is configured
     if (this.groqApiKey) {
       try {
-        console.log('Using Groq fallback provider for structured JSON generation...');
+        console.info('Using Groq fallback provider for structured JSON generation...');
         return await this.generateWithGroq(prompt, systemInstruction, schema);
       } catch (groqErr: any) {
         console.error('Groq fallback call also failed:', groqErr.message || groqErr);

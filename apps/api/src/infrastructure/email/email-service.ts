@@ -13,7 +13,12 @@ export class EmailService {
   private appBaseUrl: string;
 
   constructor(apiKey?: string, fromAddress?: string, appBaseUrl?: string) {
-    this.apiKey = apiKey ?? env.RESEND_API_KEY ?? null;
+    // In test environment, always run in simulated mode to prevent external network latency and rate limits
+    if (process.env.NODE_ENV === 'test') {
+      this.apiKey = null;
+    } else {
+      this.apiKey = apiKey ?? env.RESEND_API_KEY ?? null;
+    }
     this.fromAddress = fromAddress ?? env.NOTIFICATION_EMAIL_FROM;
     this.appBaseUrl = appBaseUrl ?? env.APP_BASE_URL;
   }
@@ -151,7 +156,7 @@ export class EmailService {
 
   async sendEmail(to: string, subject: string, html: string): Promise<EmailSendResult> {
     if (!this.apiKey) {
-      console.log(
+      console.info(
         JSON.stringify({
           level: 'info',
           simulated: true,

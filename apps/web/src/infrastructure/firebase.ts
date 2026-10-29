@@ -24,9 +24,9 @@ if (useEmulator && typeof window !== 'undefined') {
     if (!(auth as any)._emulatorConfig) {
       connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
       connectFirestoreEmulator(db, '127.0.0.1', 8085);
-      console.log('[Trellis] Connected to Firebase Emulator Suite (Auth: 9099, Firestore: 8085)');
+      console.info('[Trellis] Connected to Firebase Emulator Suite (Auth: 9099, Firestore: 8085)');
     }
-  } catch (err) {
+  } catch (_err) {
     // Ignore already connected warnings in hot reload
   }
 }
