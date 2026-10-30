@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "description": "Trellis — AI-Powered Celebration & Event Planning Platform",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter @trellis/api --filter @trellis/web run dev",
     "build": "pnpm --filter \"@trellis/*\" run build",
