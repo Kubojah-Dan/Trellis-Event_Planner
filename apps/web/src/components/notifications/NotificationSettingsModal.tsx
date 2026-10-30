@@ -222,61 +222,70 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                 <p className="text-[11px] font-bold text-ink-subtle uppercase tracking-wider">Milestone Alert Types</p>
 
                 {/* Day of Event / Countdown */}
-                <label className="flex items-start justify-between p-3 rounded-xl bg-white/50 border border-bark/8 hover:bg-white cursor-pointer transition-colors">
-                  <div className="flex items-start space-x-3 pr-2">
+                <div className="flex items-start justify-between p-3 rounded-xl bg-white/50 border border-bark/8 hover:bg-white transition-colors">
+                  <label htmlFor="pref-event-day-reminder" className="flex items-start space-x-3 pr-2 cursor-pointer flex-1">
                     <Calendar className="w-4 h-4 text-moss mt-0.5 flex-shrink-0" />
                     <div>
                       <span className="text-xs font-semibold text-bark block">Event Day & Countdown Alerts</span>
-                      <span className="text-[11px] text-ink-muted">
+                      <span id="desc-event-day-reminder" className="text-[11px] text-ink-muted">
                         Day-of morning briefing and countdown notices as the date draws near.
                       </span>
                     </div>
-                  </div>
+                  </label>
                   <input
+                    id="pref-event-day-reminder"
                     type="checkbox"
+                    aria-label="Event Day & Countdown Alerts"
+                    aria-describedby="desc-event-day-reminder"
                     checked={prefs.notifyOnEventDayReminder}
                     onChange={(e) => setPrefs({ ...prefs, notifyOnEventDayReminder: e.target.checked })}
-                    className="w-4 h-4 accent-moss rounded mt-1 cursor-pointer"
+                    className="w-4 h-4 accent-moss rounded mt-1 cursor-pointer flex-shrink-0"
                   />
-                </label>
+                </div>
 
                 {/* Task Completions */}
-                <label className="flex items-start justify-between p-3 rounded-xl bg-white/50 border border-bark/8 hover:bg-white cursor-pointer transition-colors">
-                  <div className="flex items-start space-x-3 pr-2">
+                <div className="flex items-start justify-between p-3 rounded-xl bg-white/50 border border-bark/8 hover:bg-white transition-colors">
+                  <label htmlFor="pref-task-completed" className="flex items-start space-x-3 pr-2 cursor-pointer flex-1">
                     <CheckSquare className="w-4 h-4 text-moss mt-0.5 flex-shrink-0" />
                     <div>
                       <span className="text-xs font-semibold text-bark block">Completed To-Dos & Milestones</span>
-                      <span className="text-[11px] text-ink-muted">
+                      <span id="desc-task-completed" className="text-[11px] text-ink-muted">
                         Celebrate task milestones and keep track of checklist progress.
                       </span>
                     </div>
-                  </div>
+                  </label>
                   <input
+                    id="pref-task-completed"
                     type="checkbox"
+                    aria-label="Completed To-Dos & Milestones"
+                    aria-describedby="desc-task-completed"
                     checked={prefs.notifyOnTaskCompleted}
                     onChange={(e) => setPrefs({ ...prefs, notifyOnTaskCompleted: e.target.checked })}
-                    className="w-4 h-4 accent-moss rounded mt-1 cursor-pointer"
+                    className="w-4 h-4 accent-moss rounded mt-1 cursor-pointer flex-shrink-0"
                   />
-                </label>
+                </div>
 
                 {/* Plans Created & Revisions */}
-                <label className="flex items-start justify-between p-3 rounded-xl bg-white/50 border border-bark/8 hover:bg-white cursor-pointer transition-colors">
-                  <div className="flex items-start space-x-3 pr-2">
+                <div className="flex items-start justify-between p-3 rounded-xl bg-white/50 border border-bark/8 hover:bg-white transition-colors">
+                  <label htmlFor="pref-plan-created" className="flex items-start space-x-3 pr-2 cursor-pointer flex-1">
                     <Sparkles className="w-4 h-4 text-terra mt-0.5 flex-shrink-0" />
                     <div>
                       <span className="text-xs font-semibold text-bark block">Plan Creation & Revisions</span>
-                      <span className="text-[11px] text-ink-muted">
+                      <span id="desc-plan-created" className="text-[11px] text-ink-muted">
                         Receive your calibrated operational briefing whenever a new plan or patch is generated.
                       </span>
                     </div>
-                  </div>
+                  </label>
                   <input
+                    id="pref-plan-created"
                     type="checkbox"
+                    aria-label="Plan Creation & Revisions"
+                    aria-describedby="desc-plan-created"
                     checked={prefs.notifyOnPlanCreated}
                     onChange={(e) => setPrefs({ ...prefs, notifyOnPlanCreated: e.target.checked })}
-                    className="w-4 h-4 accent-moss rounded mt-1 cursor-pointer"
+                    className="w-4 h-4 accent-moss rounded mt-1 cursor-pointer flex-shrink-0"
                   />
-                </label>
+                </div>
               </div>
             </div>
           )}

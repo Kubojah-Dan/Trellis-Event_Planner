@@ -216,16 +216,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [activeUser, signOut]);
 
-  const openAuthModal = (mode: AuthModalMode = 'login') => {
+  const openAuthModal = useCallback((mode: AuthModalMode = 'login') => {
     setAuthModalMode(mode);
     setIsAuthModalOpen(true);
-  };
+  }, []);
 
-  const closeAuthModal = () => {
+  const closeAuthModal = useCallback(() => {
     setIsAuthModalOpen(false);
-  };
+  }, []);
 
-  const switchDemoUser = (uid: string, name: string, email: string) => {
+  const switchDemoUser = useCallback((uid: string, name: string, email: string) => {
     const profile: UserProfile = {
       uid,
       displayName: name,
@@ -235,9 +235,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setDemoUser(profile);
     localStorage.setItem('trellis_demo_user', JSON.stringify(profile));
-  };
+  }, []);
 
-  const getIdToken = async (): Promise<string | null> => {
+  const getIdToken = useCallback(async (): Promise<string | null> => {
     if (firebaseUser) {
       return firebaseUser.getIdToken();
     }
@@ -245,26 +245,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return `test-token-${demoUser.uid}`;
     }
     return null;
-  };
+  }, [firebaseUser, demoUser]);
+
+  const contextValue = useMemo<AuthContextType>(
+    () => ({
+      user: activeUser,
+      loading,
+      signInWithGoogle,
+      signInWithEmail,
+      signUpWithEmail,
+      sendPasswordReset,
+      signOut,
+      getIdToken,
+      isAuthModalOpen,
+      authModalMode,
+      openAuthModal,
+      closeAuthModal,
+      switchDemoUser,
+    }),
+    [
+      activeUser,
+      loading,
+      signOut,
+      getIdToken,
+      isAuthModalOpen,
+      authModalMode,
+      openAuthModal,
+      closeAuthModal,
+      switchDemoUser,
+    ]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user: activeUser,
-        loading,
-        signInWithGoogle,
-        signInWithEmail,
-        signUpWithEmail,
-        sendPasswordReset,
-        signOut,
-        getIdToken,
-        isAuthModalOpen,
-        authModalMode,
-        openAuthModal,
-        closeAuthModal,
-        switchDemoUser,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

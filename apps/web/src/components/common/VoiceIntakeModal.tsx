@@ -54,6 +54,7 @@ export const VoiceIntakeModal: React.FC<VoiceIntakeModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="voice-intake-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bark/40 backdrop-blur-sm animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -81,12 +82,12 @@ export const VoiceIntakeModal: React.FC<VoiceIntakeModalProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-terra" />
             <span>Voice-Powered Intake</span>
           </div>
-          <h3 className="font-serif text-3xl text-bark">{title}</h3>
+          <h3 id="voice-intake-title" className="font-serif text-3xl text-bark">{title}</h3>
           <p className="text-xs text-ink-muted mt-1 max-w-sm mx-auto leading-relaxed">{subtitle}</p>
         </div>
 
         {/* Central Audio Wave / Listening Sphere */}
-        <div className="flex flex-col items-center justify-center my-6">
+        <div className="flex flex-col items-center justify-center my-6" aria-live="polite">
           <div className="relative flex items-center justify-center">
             {/* Outer pulsating wave rings */}
             {isListening && (

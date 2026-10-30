@@ -1,10 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
   EventBriefSchema,
+  EventAggregateSchema,
   ConceptSchema,
   TaskItemSchema,
   BudgetItemSchema,
+  VendorItemSchema,
   ChangeProposalSchema,
+  NotificationPreferencesSchema,
+  EventDateSchema,
 } from '../../packages/contracts/src';
 
 describe('Contracts - Zod Schema Invariants', () => {
@@ -123,6 +127,60 @@ describe('Contracts - Zod Schema Invariants', () => {
       updatedAt: '2026-10-26T12:00:00Z',
     };
     expect(BudgetItemSchema.safeParse(budget).success).toBe(true);
+  });
+
+  it('validates vendor item contracts', () => {
+    const vendor = {
+      id: 'v-301',
+      eventId: 'evt-001',
+      category: 'Catering',
+      name: 'Farmstead Hearth',
+      stage: 'shortlisted',
+      contactInfo: { email: 'chef@farmstead.com', phone: '+1-555-0192' },
+      pricingModel: 'per_guest',
+      quotedPriceMinorUnits: 1200000,
+      notes: 'Organic farm-to-table focus with seasonal vegetable pairings',
+      provenance: 'user_entered',
+      locked: false,
+      createdAt: '2026-10-26T12:00:00Z',
+      updatedAt: '2026-10-26T12:00:00Z',
+    };
+    expect(VendorItemSchema.safeParse(vendor).success).toBe(true);
+  });
+
+  it('validates full EventAggregate entity schema', () => {
+    const event = {
+      id: 'evt-full-001',
+      ownerId: 'usr-123',
+      title: 'Autumn Solstice Gathering',
+      eventType: 'custom',
+      brief: {
+        title: 'Autumn Solstice Gathering',
+        eventType: 'custom',
+        currency: 'USD',
+      },
+      currentVersion: 1,
+      createdAt: '2026-10-26T12:00:00Z',
+      updatedAt: '2026-10-26T12:00:00Z',
+    };
+    expect(EventAggregateSchema.safeParse(event).success).toBe(true);
+  });
+
+  it('validates notification preferences schema', () => {
+    const prefs = {
+      emailNotificationsEnabled: true,
+      recipientEmail: 'maya@example.com',
+      notifyOnPlanCreated: true,
+      notifyOnTaskCompleted: true,
+      notifyOnEventDayReminder: true,
+      notifyOnRevisions: true,
+    };
+    expect(NotificationPreferencesSchema.safeParse(prefs).success).toBe(true);
+  });
+
+  it('validates ISO 8601 event date schema', () => {
+    expect(EventDateSchema.safeParse('2026-09-18T16:00:00Z').success).toBe(true);
+    expect(EventDateSchema.safeParse('not-a-date').success).toBe(false);
   });
 
   it('validates change proposals with operation patches', () => {

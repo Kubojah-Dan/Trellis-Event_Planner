@@ -19,6 +19,30 @@ export class InMemoryEventRepository implements EventRepository {
   private proposals = new Map<string, ChangeProposal>();
   private versions = new Map<string, VersionRecord[]>();
 
+  // Secondary indices for O(1) event lookup without scanning all items in memory
+  private eventTaskIds = new Map<string, Set<string>>();
+  private eventBudgetIds = new Map<string, Set<string>>();
+  private eventVendorIds = new Map<string, Set<string>>();
+  private eventIdeaIds = new Map<string, Set<string>>();
+  private eventProposalIds = new Map<string, Set<string>>();
+
+  private addToIndex(index: Map<string, Set<string>>, eventId: string, itemId: string) {
+    let set = index.get(eventId);
+    if (!set) {
+      set = new Set();
+      index.set(eventId, set);
+    }
+    set.add(itemId);
+  }
+
+  private removeFromIndex(index: Map<string, Set<string>>, eventId: string, itemId: string) {
+    const set = index.get(eventId);
+    if (set) {
+      set.delete(itemId);
+      if (set.size === 0) index.delete(eventId);
+    }
+  }
+
   async create(event: EventAggregate): Promise<EventAggregate> {
     this.events.set(event.id, { ...event });
     this.versions.set(event.id, [
@@ -37,20 +61,51 @@ export class InMemoryEventRepository implements EventRepository {
     const event = this.events.get(eventId);
     if (!event) return null;
 
-    const tasks = Array.from(this.tasks.values()).filter((t) => t.eventId === eventId);
-    const budgetItems = Array.from(this.budgetItems.values()).filter((b) => b.eventId === eventId);
-    const vendors = Array.from(this.vendors.values()).filter((v) => v.eventId === eventId);
-    const ideas = Array.from(this.ideas.values()).filter((i) => i.eventId === eventId);
-    const proposals = Array.from(this.proposals.values()).filter((p) => p.eventId === eventId);
+    // Use indexed direct lookups instead of full table scans across all events
+    const taskIds = this.eventTaskIds.get(eventId) || new Set();
+    const tasks: TaskItem[] = [];
+    for (const id of taskIds) {
+      const item = this.tasks.get(id);
+      if (item) tasks.push({ ...item });
+    }
+
+    const budgetIds = this.eventBudgetIds.get(eventId) || new Set();
+    const budgetItems: BudgetItem[] = [];
+    for (const id of budgetIds) {
+      const item = this.budgetItems.get(id);
+      if (item) budgetItems.push({ ...item });
+    }
+
+    const vendorIds = this.eventVendorIds.get(eventId) || new Set();
+    const vendors: VendorItem[] = [];
+    for (const id of vendorIds) {
+      const item = this.vendors.get(id);
+      if (item) vendors.push({ ...item });
+    }
+
+    const ideaIds = this.eventIdeaIds.get(eventId) || new Set();
+    const ideas: IdeaItem[] = [];
+    for (const id of ideaIds) {
+      const item = this.ideas.get(id);
+      if (item) ideas.push({ ...item });
+    }
+
+    const proposalIds = this.eventProposalIds.get(eventId) || new Set();
+    const proposals: ChangeProposal[] = [];
+    for (const id of proposalIds) {
+      const item = this.proposals.get(id);
+      if (item) proposals.push({ ...item });
+    }
+
     const versions = this.versions.get(eventId) || [];
 
     return {
       event: { ...event },
-      tasks: tasks.map((t) => ({ ...t })),
-      budgetItems: budgetItems.map((b) => ({ ...b })),
-      vendors: vendors.map((v) => ({ ...v })),
-      ideas: ideas.map((i) => ({ ...i })),
-      proposals: proposals.map((p) => ({ ...p })),
+      tasks,
+      budgetItems,
+      vendors,
+      ideas,
+      proposals,
       versions: [...versions],
     };
   }
@@ -70,55 +125,68 @@ export class InMemoryEventRepository implements EventRepository {
   }
 
   async saveTask(task: TaskItem): Promise<TaskItem> {
-    this.tasks.set(task.id, { ...task, updatedAt: new Date().toISOString() });
-    return { ...this.tasks.get(task.id)! };
+    const clone = { ...task, updatedAt: new Date().toISOString() };
+    this.tasks.set(task.id, clone);
+    this.addToIndex(this.eventTaskIds, task.eventId, task.id);
+    return { ...clone };
   }
 
   async deleteTask(eventId: string, taskId: string): Promise<void> {
     const task = this.tasks.get(taskId);
     if (task && task.eventId === eventId) {
       this.tasks.delete(taskId);
+      this.removeFromIndex(this.eventTaskIds, eventId, taskId);
     }
   }
 
   async saveBudgetItem(item: BudgetItem): Promise<BudgetItem> {
-    this.budgetItems.set(item.id, { ...item, updatedAt: new Date().toISOString() });
-    return { ...this.budgetItems.get(item.id)! };
+    const clone = { ...item, updatedAt: new Date().toISOString() };
+    this.budgetItems.set(item.id, clone);
+    this.addToIndex(this.eventBudgetIds, item.eventId, item.id);
+    return { ...clone };
   }
 
   async deleteBudgetItem(eventId: string, itemId: string): Promise<void> {
     const item = this.budgetItems.get(itemId);
     if (item && item.eventId === eventId) {
       this.budgetItems.delete(itemId);
+      this.removeFromIndex(this.eventBudgetIds, eventId, itemId);
     }
   }
 
   async saveVendorItem(vendor: VendorItem): Promise<VendorItem> {
-    this.vendors.set(vendor.id, { ...vendor, updatedAt: new Date().toISOString() });
-    return { ...this.vendors.get(vendor.id)! };
+    const clone = { ...vendor, updatedAt: new Date().toISOString() };
+    this.vendors.set(vendor.id, clone);
+    this.addToIndex(this.eventVendorIds, vendor.eventId, vendor.id);
+    return { ...clone };
   }
 
   async deleteVendorItem(eventId: string, vendorId: string): Promise<void> {
     const vendor = this.vendors.get(vendorId);
     if (vendor && vendor.eventId === eventId) {
       this.vendors.delete(vendorId);
+      this.removeFromIndex(this.eventVendorIds, eventId, vendorId);
     }
   }
 
   async saveIdeaItem(idea: IdeaItem): Promise<IdeaItem> {
-    this.ideas.set(idea.id, { ...idea, updatedAt: new Date().toISOString() });
-    return { ...this.ideas.get(idea.id)! };
+    const clone = { ...idea, updatedAt: new Date().toISOString() };
+    this.ideas.set(idea.id, clone);
+    this.addToIndex(this.eventIdeaIds, idea.eventId, idea.id);
+    return { ...clone };
   }
 
   async deleteIdeaItem(eventId: string, ideaId: string): Promise<void> {
     const idea = this.ideas.get(ideaId);
     if (idea && idea.eventId === eventId) {
       this.ideas.delete(ideaId);
+      this.removeFromIndex(this.eventIdeaIds, eventId, ideaId);
     }
   }
 
   async saveProposal(proposal: ChangeProposal): Promise<ChangeProposal> {
     this.proposals.set(proposal.id, { ...proposal });
+    this.addToIndex(this.eventProposalIds, proposal.eventId, proposal.id);
     return { ...proposal };
   }
 
@@ -174,18 +242,18 @@ export class InMemoryEventRepository implements EventRepository {
     const updatedVendors = applyOperationsSafely(current.vendors, vendorOps, 'vendor').updatedItems.map((v) => ({ ...v, eventId }));
     const updatedIdeas = applyOperationsSafely(current.ideas, ideaOps, 'idea').updatedItems.map((i) => ({ ...i, eventId }));
 
-    // Save updated items into store
-    for (const t of current.tasks) this.tasks.delete(t.id);
-    for (const t of updatedTasks) this.tasks.set(t.id, t);
+    // Save updated items into store and sync indices
+    for (const t of current.tasks) this.deleteTask(eventId, t.id);
+    for (const t of updatedTasks) this.saveTask(t);
 
-    for (const b of current.budgetItems) this.budgetItems.delete(b.id);
-    for (const b of updatedBudget) this.budgetItems.set(b.id, b);
+    for (const b of current.budgetItems) this.deleteBudgetItem(eventId, b.id);
+    for (const b of updatedBudget) this.saveBudgetItem(b);
 
-    for (const v of current.vendors) this.vendors.delete(v.id);
-    for (const v of updatedVendors) this.vendors.set(v.id, v);
+    for (const v of current.vendors) this.deleteVendorItem(eventId, v.id);
+    for (const v of updatedVendors) this.saveVendorItem(v);
 
-    for (const i of current.ideas) this.ideas.delete(i.id);
-    for (const i of updatedIdeas) this.ideas.set(i.id, i);
+    for (const i of current.ideas) this.deleteIdeaItem(eventId, i.id);
+    for (const i of updatedIdeas) this.saveIdeaItem(i);
 
     // Increment version
     const newVersionNumber = current.event.currentVersion + 1;
@@ -222,5 +290,10 @@ export class InMemoryEventRepository implements EventRepository {
     this.ideas.clear();
     this.proposals.clear();
     this.versions.clear();
+    this.eventTaskIds.clear();
+    this.eventBudgetIds.clear();
+    this.eventVendorIds.clear();
+    this.eventIdeaIds.clear();
+    this.eventProposalIds.clear();
   }
 }

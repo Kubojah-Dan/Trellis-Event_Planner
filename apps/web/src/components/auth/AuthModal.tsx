@@ -135,6 +135,7 @@ export const AuthModal: React.FC = () => {
       id="auth-modal"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="auth-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bark/40 backdrop-blur-sm animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) closeAuthModal();
@@ -160,7 +161,7 @@ export const AuthModal: React.FC = () => {
               className="w-10 h-10 object-contain drop-shadow-sm"
             />
           </div>
-          <h2 className="font-serif text-3xl text-bark tracking-wide">
+          <h2 id="auth-modal-title" className="font-serif text-3xl text-bark tracking-wide">
             T<em className="text-terra italic font-serif">rellis</em>
           </h2>
           <p className="text-xs text-ink-muted mt-1">
