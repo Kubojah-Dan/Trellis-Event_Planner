@@ -5,6 +5,9 @@ export { PROVENANCE_LABELS } from '@trellis/config';
 // Enums & Literals
 // =============================================================================
 
+export const EventDateSchema = z.string().datetime();
+export type EventDate = z.infer<typeof EventDateSchema>;
+
 export const EventTypeSchema = z.enum(['wedding', 'birthday', 'community', 'custom']);
 export type EventType = z.infer<typeof EventTypeSchema>;
 
